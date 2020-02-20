@@ -3,7 +3,6 @@
 
 
 [CmdletBinding()]
-[CmdletBinding()]
 param 
 (
     [Parameter(Mandatory = $false)]
