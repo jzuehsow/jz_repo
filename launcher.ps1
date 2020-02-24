@@ -33,4 +33,4 @@ While ($result -eq 0)
     If (($result -le 0) -or ($result -gt $choices.Length)) {$result = 0}
 }
 
-mainMenuAction
+mainMenuAction ($result)
