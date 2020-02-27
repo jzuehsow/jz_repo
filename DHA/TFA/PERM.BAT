@@ -1,0 +1,1 @@
+powershell -file [PERM EXEMPT FILE]

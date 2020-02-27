@@ -1,0 +1,1 @@
+Start PowerShell.exe -File "[PATH]\ManageSecurityGroup.ps1"

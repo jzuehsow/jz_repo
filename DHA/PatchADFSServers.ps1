@@ -12,7 +12,7 @@ Change Log: v1.1 Added functions for monitoring servers and checking load balanc
 #############################################################################################################################################################>
 
 
-."\\fbinet\public\Software\Scripts\AD\PowerShell\Config\Common.ps1"
+."[PATH]]\Config\Common.ps1"
 $version = '1.2'
 
 Start_Script
