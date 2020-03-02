@@ -3,20 +3,23 @@
 
 
 
+
 ##############################################################################################################################################################
 <# 
-
-
-
+Author - 
+Purpose - Name Change.
 
 Change Log:
-v2.0 10/2/2017 - Production testing.
+
 
 
 
 #>                         
 ##############################################################################################################################################################
-$PSDefaultParameterValues = @{"*-AD*:Server"="$pdc"}
+$version = "2.0"
+
+#CALL COMMON FUNCTIONS HERE
+Start_Script
 
 
 ##############################################################################################################################################################
@@ -47,7 +50,7 @@ Until ($rmapproveeid -eq "Y")
 Do
 {
 ""
-$rmfbinetaccount = Read-Host "Does the user have an FBINET account (Y/N)"
+$rmfbinetaccount = Read-Host "Does the user have an RED account (Y/N)"
 }
 Until ($rmfbinetaccount -eq "Y" -or $rmfbinetaccount -eq "N")
 
@@ -56,19 +59,19 @@ If ($rmfbinetaccount -eq "Y")
 ""    
     Do
     {
-    $rmfbinetchanged = Read-Host "Has the user's name been changed on FBINET (Y/N)"
+    $rmfbinetchanged = Read-Host "Has the user's name been changed on RED (Y/N)"
     }
     Until ($rmfbinetchanged -eq "Y" -or $rmfbinetchanged -eq "N")
 
-        If ($rmfbinetchanged -eq "N"){"";Write-Host "The user's name must be changed on FBINET before changing UNET." -F Red;Pause;Exit}
+        If ($rmfbinetchanged -eq "N"){"";Write-Host "The user's name must be changed on RED before changing GREEN." -F Red;Pause;Exit}
 }
 
     If ($rmfbinetaccount -eq "Y")
     {
-    "";$rmnewuser = Read-Host "Enter users FBINET username";$rmnewuser = $rmnewuser.toupper();""
+    "";$rmnewuser = Read-Host "Enter users RED username";$rmnewuser = $rmnewuser.toupper();""
     $rmmanualtest = $(try {get-aduser $rmnewuser} catch {$null})
     
-        If ($rmmanualtest -and $rmnewuser -ne $rmolduser){Write-Host "Username already in use on FBINET. Resolve naming conflict...." -F Red;Pause;Exit}
+        If ($rmmanualtest -and $rmnewuser -ne $rmolduser){Write-Host "Username already in use on RED. Resolve naming conflict...." -F Red;Pause;Exit}
     }
 
 ##############################################################################################################################################################
@@ -125,7 +128,7 @@ $rmname = $rmdisplayname.Split("(")[0];$rmname = $rmname.Substring(0,($rmname.Le
 ##############################################################################################################################################################
 
 
-If ($rmfbinetaccount -eq "N")
+If ($rmREDaccount -eq "N")
 {
 $rmfsltr = $rmGivenName.Substring(0,1)
 $rmnewuser = "$rmfsltr$rmmnltr$rmSurname"
@@ -184,7 +187,7 @@ Until ($rmacceptusername -eq "Y" -or $rmacceptusername -eq "N")
 ##############################################################################################################################################################
 
 Set-ADUser -Identity $rmSID -SamAccountName "$rmnewuser"
-Set-ADUser -Identity $rmSID -UserPrincipalName "$rmnewuser@FBI.GOV"
+Set-ADUser -Identity $rmSID -UserPrincipalName "$rmnewuser@[DOMAIN]"
 
 for ($a=1; $a -lt 100; $a++) 
 {
@@ -197,7 +200,7 @@ $rmchangepass = $(try {get-aduser $rmnewuser} catch {$null})
 If (!($rmchangepass))
 {
 Set-ADUser -Identity $rmSID -SamAccountName "$rmolduser"
-Set-ADUser -Identity $rmSID -UserPrincipalName "$rmolduser@FBI.GOV"
+Set-ADUser -Identity $rmSID -UserPrincipalName "$rmolduser@[DOMAIN]"
 Write-Host "**** Name change failed. You do not have appropriate permissions ****" -F Red
 Exit;Pause
 }
@@ -206,11 +209,11 @@ Exit;Pause
 #   Creates connection to an Exchange server 
 #####################################################################################################################################################################################################
 
-$exsvrs = (Get-ADComputer -Filter {Name -like "HQV2-UO365-*"}).Name
+$exsvrs = (Get-ADComputer -Filter {Name -like "[EXCH SERVER HINT]-*"}).Name
 Foreach ($exsvr in $exsvrs)
 {
     If (Test-Connection $exsvr -Count 2){
-    $session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://$exsvr.FBI.GOV/Powershell/
+    $session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://$exsvr.[DOMAIN]]/Powershell/
     Import-PSSession $session -DisableNameChecking -AllowClobber -Verbose:$false -ErrorAction Stop | Out-Null
     Break}
 }
@@ -295,7 +298,7 @@ Foreach ($item in $rmproxies.proxyaddresses)
     }
 }
 
-Set-ADUser -Identity $rmSID -add @{proxyAddresses = "SMTP:$rmnewuser@FBI.GOV"}
+Set-ADUser -Identity $rmSID -add @{proxyAddresses = "SMTP:$rmnewuser@[DOMAIN]"}
 Set-ADUser -Identity $rmSID -EmailAddress $rmnewemail
 
 ##############################################################################################################################################################
