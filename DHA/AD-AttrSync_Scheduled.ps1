@@ -1,11 +1,28 @@
+<###############################################################################################################################
+
+Created by: Jeremy Zuehsow
+
+Summary: Import a CSV of all attributes and sync with AD
+
+###############################################################################################################################>
 
 
+Set-Location $PSScriptRoot
+.".\Config\Common.ps1"
+$version = '1.0'
+
+Start_Script
+
+
+<###############################################################################################################################
+
+###############################################################################################################################>
 
 
 # Separate attributes to sync with a comma Example: "Department,Title,Office"
 $attributes = "Department"
-$maxchanges = 100
-$fbinetpath = "[RED EXPORT CSV]"
+$maxchanges = 100 #PERFORM A WHATIF INSTEAD?
+$REDpath = "[RED EXPORT CSV]"
 $date = Get-Date -Format MM-dd-yy-HHmm
 $log = "[ATTRIBUTE LOGS PATH]\$date.csv"
 $notifyaddress = "[]"
