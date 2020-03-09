@@ -1,12 +1,22 @@
+<###############################################################################################################################
+
+Created by: Jeremy Zuehsow
+
+The purpose of this script is to 
+
+v1.0 - 
+
+###############################################################################################################################>
 
 
+Set-Location $PSScriptRoot
+.".\Config\Common.ps1"
+$version = '1.0'
+
+Start_Script
+New_ExchangeSession
 
 
-
-Import-Module ActiveDirectory
-$ErrorActionPreference = 'SilentlyContinue'
-$session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://[EXCHANGE SERVER FQDN]/PowerShell -Authentication Kerberos -Credentials $creds
-Import-PSSession $session
 $searchBase = [USERS OU]
 $users = Get-ADUser -Filter * -SearchBase $searchBase
 

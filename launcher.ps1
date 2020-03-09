@@ -1,13 +1,22 @@
+<###############################################################################################################################
+
+Created by: Jeremy Zuehsow
+
+The purpose of this script is to perform ongoing Active Directory maintenance actions.
+
+###############################################################################################################################>
+
+
 #launcher for scripts
 #Needs Review
 #List choices based on list of subfolders - ad, exch, file, etc
 
 
 cd $PSScriptRoot
-$configFile = 'config.ini'
 .".\config\common.ps1"
-$configFQName = Get-ChildItem -Path config\config.ini | Select-Object FullName
 
+$configFile = ".\config\config.ini"
+$configFQName = Get-ChildItem -Path $configFile| Select-Object FullName
 $configData = @()
 $configData = setConfigData $configFQName.FullName.ToString()
 
@@ -15,8 +24,11 @@ Function MainMenuAction ($result)
 {
     Switch ($result)
     {
-        1 {& ".\ActiveDirectory\ActiveDirectoryLauncher.ps1" -configData $configData -ConnectTo Exchange $false}
-        2 {& ".\Exchange\ExchangeLauncher.ps1" -configData $configData -ConnectToExchange $true}
+        1 {& ".\ActiveDirectory\launcher-AD.ps1" -configData $configData -ConnectTo Exchange $false}
+        #SPLIT AUDITING/MONITORING AND ACTIONS
+        #SPLIT SPECIFIC AND BULK ACTIONS
+
+        2 {& ".\Exchange\launcher-EXCH.ps1" -configData $configData -ConnectToExchange $true}
         3 {#Options / Settings}
         4 {Exit}
         Default {}
