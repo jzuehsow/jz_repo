@@ -17,7 +17,26 @@ $log = "[LOGS PATH]\Unarchived Users"
 #   Exchange Connections
 ##############################################################################################################################################################
 
+<#$pass = Get-MsolUser -MaxResults 1
+If(!$pass)
+{
+Write-Host "You must provide your credentials to connect to Office 365. Press Enter and supply them to the popup window." -F Green;Pause
+    Do
+    {
+    $eid = (Get-ADUser $adm -Properties EmployeeNumber).EmployeeNumber
+    $usrupn = (Get-ADUser -Filter {EmployeeID -eq $eid} | Where {$_.SamAccountName -notlike "[0-9]*"}).UserPrincipalName
+    #$cred = Get-Credential -Credential $usrupn
+    Connect-MsolService -ErrorAction $errorpref
+    $pass = Get-MsolUser -MaxResults 1;If (!$pass){Write-Host "Failed to connect to o365. Press enter to try again." -F Red;Pause}
+    }
+    Until ($pass)
+}
+
+
 New_ExchangeSession
+Clear-Host;$banner
+#>
+
 
 ###################################################################################################################################################################
 # Input                                       
@@ -175,7 +194,7 @@ $rmcanonical = (Get-ADOrganizationalUnit $rmou -Properties CanonicalName).Canoni
 Write-Progress -Activity "Unarchiving user $rmuser......" -PercentComplete 25
 
 ##############################################################################################################################################################
-# IF FBINET found and Else
+# IF  found and Else
 ##############################################################################################################################################################
 
 If ($rmreduser)

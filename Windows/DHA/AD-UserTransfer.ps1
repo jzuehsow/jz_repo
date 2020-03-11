@@ -3,51 +3,15 @@
 
 
 
-################################################################################################################################
-<# Created by Taylor S Perry, IMSU, 2/24/17
-The purpose of this script is to autmote user transfers.
-Updated - UNET verbage, and CanonicalName - Eli 7/31/17a
-Added loop for multiple users - 10/10/17
-
-
-#>
-################################################################################################################################    
-
-$version = "1.0"
-$banner = "
-----------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------------                                                                                                                     
-
-                                      User Transfer Script - Version $version
-                                                                                                                                                                              
-----------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------------------------
 
 
 
 
-"
-$pshost = get-host;$pswindow = $pshost.UI.RawUI;$newsize = $pswindow.BufferSize
-$newsize.Height = 65;$newsize.Width = 120;$pswindow.BufferSize = $newsize
 
-$pdc = Get-ADDomain | Select-Object PDCEmulator
-$pdc = $pdc.PDCEmulator
-$PSDefaultParameterValues = @{"*-AD*:Server"="$pdc"}
+#IMPORT COMMON FUNCTIONS
 
-$rmadm = $env:username
-$rmsvr = $env:COMPUTERNAME
-$rmgptest = Get-ADPrincipalGroupMembership $rmadm | select name | where {$_.name -like "*Administrators_MDSU*"}
-$rmwid=[System.Security.Principal.WindowsIdentity]::GetCurrent()
-$rmprp=new-object System.Security.Principal.WindowsPrincipal($rmwid)
-$rmadm=[System.Security.Principal.WindowsBuiltInRole]::Administrator
-$rmisadm = $rmprp.IsInRole($rmadm)
+Start_Script
 
-Clear-Host;$banner
-If (!$rmgptest){Write-Host "Only members of MDSU administrative groups are allowed to run this script." -F Red;Pause;Exit}
-#If ("HQCK-UADMN-401" -ne $rmsvr){Write-Host "As a breakfix, the provisioning script must be ran from HQCK-UADMN-401." -F Red;Pause;Exit}
-If ($rmisadm -eq $false){Write-Host "Powershell not running as administrator." -F Red;Pause;Exit}
-
-$date = Get-Date -Format MM/dd/yy
 
 Do # Script loop. "Until" at end of script
 {
@@ -136,11 +100,11 @@ Do{
     If (!$(try {Get-ADUser -Filter * -SearchBase $dn -ResultSetSize 1} catch {$null})){$rmou = $null}
 
     $rmoucon = ($(try {(Get-ADOrganizationalUnit $rmou -Properties CanonicalName).CanonicalName.toupper()} catch {$null}))
-    If ($rmoucon) {$rmoucon = $rmoucon.Replace("FBI.GOV/","")}
+    If ($rmoucon) {$rmoucon = $rmoucon.Replace("[DOMAIN]/","")}
 
     $rmoldcon = (Get-ADUser $rmuser -Properties CanonicalName).CanonicalName
     $rmoldcon = ($rmoldcon -replace "/$rmuser","").toupper()
-    $rmoldcon = $rmoldcon.Replace("FBI.GOV/","")
+    $rmoldcon = $rmoldcon.Replace("[DOMAIN]/","")
 If (!$rmoucon){Write-Host "Unable to determine transfer location based on the info entered. Please ensure it exists in AD." -F Red}
 }
 Until ($rmoucon)

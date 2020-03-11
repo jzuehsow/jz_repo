@@ -1,320 +1,357 @@
+<#############################################################################################################################################################
+
+Author - Jeremy Zuehsow
+Purpose - FBINET shared mailbox creation.
+
+Change Log:
+v2.1 - Modifications to script per Exchange team request
 
 
 
+#############################################################################################################################################################>
 
+#IMPORT COMMOON FUNCTIONS
 
-##############################################################################################################################################################
+Start_Script
+New_ExchangeSession
 
+Remove-Variable * -Force -ErrorAction SilentlyContinue
+$ErrorActionPreference = 'SilentlyContinue'
+$WarningPreference = 'SilentlyContinue'
+$pshost = get-host;$pswindow = $pshost.UI.RawUI;$newsize = $pswindow.BufferSize
+$newsize.Height = 65;$newsize.Width = 120;$pswindow.BufferSize = $newsize
 
-##############################################################################################################################################################
-$version = "2.0"
-
-$banner = "----------------------------------------------------------------------------------------------------------------------
+$mbxOU = "[SMBX OU]"
+$sgsmOU = "[SGSM OU]"
+$guide = "[GUIDE PDF]"
+$logPath = "[LOG PATH]\Shared Mailboxes"
+$smtp = '[SMTP]'
+$version = "2.1"
+$banner = "
+----------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------                                                                                                                     
 
                                       Shared Mailbox Script - Version $version
                                                                                                                                                                               
 ----------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------
-
-
-
-
 "
-$pshost = get-host;$pswindow = $pshost.UI.RawUI;$newsize = $pswindow.BufferSize;$newsize.Height = 65;$newsize.Width = 120;$pswindow.BufferSize = $newsize
-
-$pdc = Get-ADDomain | Select-Object PDCEmulator
-$pdc = $pdc.PDCEmulator
-$PSDefaultParameterValues = @{"*-AD*:Server"="$pdc"}
-
-$wid=[System.Security.Principal.WindowsIdentity]::GetCurrent()
-$prp=new-object System.Security.Principal.WindowsPrincipal($wid)
-$adm=[System.Security.Principal.WindowsBuiltInRole]::Administrator
-$isadm = $prp.IsInRole($adm)
-
-$admin = $env:username ; $rmsvr = $env:COMPUTERNAME
-$rmgptest = Get-ADPrincipalGroupMembership $admin | select name | where {$_.name -like "**" -or $_.name -eq ""}
-
 Clear-Host;$banner
-If (!$rmgptest){Write-Host "Only members of MDSU administrative groups are allowed to run this script." -F Red;Pause;Exit}
-If ($rmisadm -eq $false){Write-Host "Powershell not running as administrator." -F Red;Pause;Exit}
 
-$ErrorActionPreference = "SilentlyContinue"
-$WarningPreference = "SilentlyContinue"
-$date = Get-Date -Format MM/dd/yy
 
 ##############################################################################################################################################################
-# User guide check
+# Input checks
 ##############################################################################################################################################################
 
-$guide = "[INPUT PATH]\Shared Mailbox Guide.pdf"
-If (!(Test-Path $guide)){Write-Host "Could not located the user guide located at:" -F Red;Write-Host $guide -F Red;Pause;Exit}
+if (!(New-Object System.Security.Principal.WindowsPrincipal([System.Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
+{
+    Write-Host "Powershell not running as administrator." -F Red; Pause; Exit
+}
+
+if (!(Test-Path $guide)) {Write-Host "Could not find the user guide located at: $guide" -F Red; Pause; Exit}
+
 
 ##############################################################################################################################################################
-# Ticket and Requestor Info
+# Enter Ticket Info
 ##############################################################################################################################################################
 
 Do
 {
-$ticket = Read-Host "Enter ticket number of shared mailbox request"
-    If ($ticket -notlike "*???*"){Write-Host "Invalid ticket number." -F Red}
+    $ticket = (Read-Host "`nEnter ticket number of shared mailbox request").ToUpper()
+    if (!$ticket) {Write-Host "`nPlease enter a ticket number." -F Red}
 }
-Until ($ticket -like "*???*")
-$ticket = ($ticket).ToUpper()
-""
-Do
-{
-$req = Read-Host "Enter the username of the mailbox requestor"
-$reqdn = $(try {(get-aduser $req).DistinguishedName} catch {$null})
-
-    If (!($reqdn)){Write-Host "User not found" -F Red}
-}
-Until ($reqdn)
-""
-##############################################################################################################################################################
-# Locates OUs
-##############################################################################################################################################################
-
-$gpbase = [GROUPS OU]
-$mbbase = [SMBX OU]
-
-$dn = $reqdn.Split(",")
-Foreach ($field in $dn)
-{
-    If ($field -like "OU*")
-    {
-    $name = (($field).Replace("OU=",""))
-        If($name -eq "Legats"){$gpou = "[OCONUS OU]" ; Break}
-    $gpou = (Get-ADOrganizationalUnit -Filter {Name -eq $name} -SearchBase $gpbase).DistinguishedName
-    If ($gpou){Break}
-    }
-}
-
-If ($gpou.count -gt 1)
-{
-    Foreach ($field in $dn)
-    {
-    $gpou = $gpou | Where {$_ -like "*$field*"}
-        If ($gpou.count -eq 1){Break}
-    }
-}
-
-Foreach ($field in $dn)
-{
-    If ($field -like "OU*")
-    {
-    $name = (($field).Replace("OU=",""))
-    $mbou = (Get-ADOrganizationalUnit -Filter {Name -eq $name} -SearchBase $mbbase).DistinguishedName
-    If ($mbou){Break}
-    }
-}
-
-If ($mbou.count -gt 1)
-{
-    Foreach ($field in $dn)
-    {
-    $mbou = $mbou | Where {$_ -like "*$field*"}
-        If ($mbou.count -eq 1){Break}
-    }
-}
-
-If (!$mbou){$mbou = $mbbase;$error1 = "Mailbox created at [TOP LEVEL SMBX OU]. Please move to the correct sub OU."}
-If (!$gpou){$gpou = $gpbase;$error2 = "Group created at [TOP LEVEL GROUPS OU]. Please move to the correct sub OU."}
-
-
-##############################################################################################################################################################
-# Mailbox Name
-##############################################################################################################################################################
+Until ($ticket)
 
 Do
 {
-$mbname = Read-Host "Enter the desired shared mailbox name"
-    If ($mbname -like "*@*"){Write-Host "Enter only the mailbox name. Do not include @[]." -F Red}
-    If ($mbname -like "* *"){Write-Host "The mailbox name cannot contain spaces." -F Red}
-    If ($mbname.length -gt 20){Write-Host "The mailbox name must be 20 characters or less." -F Red}
+    $user = (Get-ADUser (Read-Host "`nEnter the username of the mailbox requestor") -Server $pdc).SamAccountName
+    if (!$user) {Write-Host "`nUser not found." -F Red}
 }
-Until ($mbname -notlike "*@*" -and $mbname -notlike "* *" -and $mbname.length -le 20)
+Until ($user)
 
-##############################################################################################################################################################
-# Connection to an Exchange server 
-##############################################################################################################################################################
-
-$exsvrs = (Get-ADComputer -Filter {Name -like "[EXCH SVR HINT]-*"}).Name
-Foreach ($exsvr in $exsvrs)
+Do
 {
-    If (Test-Connection $exsvr -Count 2){
-    $session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://$exsvr.[DOMAIN]/Powershell/
-    Import-PSSession $session -DisableNameChecking -AllowClobber -Verbose:$false -ErrorAction Stop | Out-Null
-    Break}
+    $pass = $true
+    $mbxName = Read-Host "`nEnter the desired shared mailbox name"
+    
+    Do
+    {
+        if ($mbxName -like "*@*")
+        {
+            Write-Host "`nEnter only the mailbox name. Do not include domain (e.g. @[DOMAIN])." -F Red
+            $mbxNameTemp = $mbxName.Substring(0,$mbxName.IndexOf('@'))
+            Write-Host "`nThe new mailbox name is: " -NoNewline -F Red; Write-Host $mbxNameTemp -F Magenta
+            Do
+            {
+                $rmAt = Read-Host "`nAccept new mailbox name (Y/N)"
+                if ($rmAt -eq 'Y') {$mbxName = $mbxNameTemp}
+                else {$pass = $false}
+            }
+            Until ($rmAt -eq 'Y' -or $rmAt -eq 'N')
+        }
+    }
+    Until ($mbxName -notlike "*@*" -or $rmAt -eq 'N')
+
+    Do
+    {
+        if ($mbxName -like "* *")
+        {
+            Write-Host "`nThe mailbox name cannot contain spaces." -F Red
+            $mbxNameTemp1 = $mbxName.TrimEnd() -replace " "
+            $mbxNameTemp2 = $mbxName.TrimEnd() -replace " " , "."
+            $mbxNameTemp3 = $mbxName.TrimEnd() -replace " " , "-"
+            $mbxNameTemp4 = $mbxName.TrimEnd() -replace " " , "_"
+            
+            Write-Host "`nWould you like to replace spaces with one of the options below?`n
+            1) $mbxNameTemp1
+            2) $mbxNameTemp2
+            3) $mbxNameTemp3
+            4) $mbxNameTemp4
+            5) None of the above"
+            
+            Do {$rmSPC = Read-Host "`nSelect Option"}
+            Until ($rmSPC -ge '1' -and $rmSPC -le '5')
+            
+            if ($rmSPC -eq '1') {$mbxName = $mbxNameTemp1}
+            if ($rmSPC -eq '2') {$mbxName = $mbxNameTemp2}
+            if ($rmSPC -eq '3') {$mbxName = $mbxNameTemp3}
+            if ($rmSPC -eq '4') {$mbxName = $mbxNameTemp4}
+            if ($rmSPC -eq '5') {$pass = $false}
+        }
+    }
+    Until ($mbxName -notlike "* *" -or $rmSPC -eq '5')
+
+    if ($mbxName.length -gt 20) {Write-Host "`nThe mailbox name must be 20 characters or less." -F Red; $pass = $false}
+    
+    if (Get-ADGroup $mbxName -Server $pdc) {Write-Host "`n$mbxName is the name of an existing security group." -F Red; $pass = $false}
+    if (Get-ADUser $mbxName -Server $pdc) {Write-Host  "`n$mbxName is the name of an existing user." -F Red; $pass = $false}
+    if (Get-RemoteMailbox $mbxName -DomainController $pdc) {Write-Host  "`n$mbxName is the name of an existing mailbox." -F Red; $pass = $false}
+
+    if ($pass)
+    {
+        $sgsmName = "SGSM_$mbxName"
+        if (Get-ADGroup $sgsmName -Server $pdc)
+        {
+            Write-Host "`nSecurity group $sgsmName already exists." -F Red
+            Do
+            {
+                $useOldSGSM = Read-Host "`nWould you like to link the existing group (Y/N)"
+                if ($useOldSGSM -eq 'N') {Write-Host "Exiting..." -F Red; Pause; Exit}
+            }
+            Until ($useOldSGSM -eq 'Y')
+        }
+
+        if ($mbxNameTemp)
+        {
+            Do
+            {
+                Write-Host "`nDoes this information appear correct?"
+                Write-host "`nMailbox Name: " -NoNewline; Write-Host $mbxName -F Magenta
+                Write-Host "`nSecurity Group: " -NoNewLine; Write-Host $sgsmName -F Magenta
+                $ok = Read-Host "`nDoes this information appear correct (Y/N)"
+                if ($ok -eq 'N') {$pass = $false}
+            }
+            Until (($ok -eq 'Y') -or ($ok -eq 'N'))
+        }
+    }
+    
+    if ($mbxNameTemp -and $pass)
+    {
+        Do
+        {
+            Write-Host "`nDoes this information appear correct?"
+            Write-host "`nMailbox Name: " -NoNewline; Write-Host $mbxName -F Magenta
+            Write-Host "`nSecurity Group: " -NoNewLine; Write-Host $sgsmName -F Magenta
+            $ok = Read-Host "`nDoes this information appear correct (Y/N)"
+            if ($ok -eq 'N') {Write-Host "`nExiting...`n" -F Red; Pause; Exit}
+        }
+        Until ($ok -eq 'Y')
+    }
+
 }
-If (Get-Command Set-RemoteMailbox)
+Until ($pass)
+
+Do
 {
-$test = Get-RemoteMailbox -Filter * -ResultSize 2 -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+    $addSelf = Read-Host "`nWould you like to add your user account to test the shared mailbox (Y/N)"
+    if (($addSelf -ne 'Y') -and ($addself -ne 'N')) {$addSelf = $null; Write-Host "`nNot a valid response." -F Red}
 }
-If (!$test){Write-Host "Connection to exchange failed. Please try again." -F Red;Pause;Exit}
+Until ($addSelf)
 
-##############################################################################################################################################################
-# Checks name availability
-##############################################################################################################################################################
-
-$taken= $null
-$secgp = "SGSM_$mbname"
-If($(try {get-adgroup $secgp} catch {$null})){$taken = "$secgp aready exists. Run the script again and try another name."}
-ElseIf($(try {get-adgroup $mbname} catch {$null})){$taken = "The mailbox name is in use by a security group. Run the script again and try another name."}
-ElseIf($(try {get-aduser $mbname} catch {$null})){$taken = "The mailbox name entered is unavailable. Run the script again and try another name."}
-ElseIf(Get-Mailbox $mbname -WarningAction SilentlyContinue -ErrorAction SilentlyContinue){$taken = $true}
-ElseIf(Get-Remotemailbox $mbname -WarningAction SilentlyContinue -ErrorAction SilentlyContinue){$taken = $true}
-      
-If ($taken){Write-Host $taken -F Red;Pause;Exit}
 
 ##############################################################################################################################################################
 # Creates Mailbox
 ##############################################################################################################################################################
 
-Write-Progress -Activity "Creating Shared Mailbox....." -PercentComplete 10
-
-New-Mailbox -Name $mbname -Alias $mbname -OrganizationalUnit $mbou -UserPrincipalName "$mbname@[DOMAIN]" -Shared -DomainController $pdc `
--ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
-
-    If (!(Get-Mailbox $mbname -DomainController $pdc -ErrorAction SilentlyContinue -WarningAction SilentlyContinue))
+Write-Progress -Activity "Creating Shared Mailbox....." -PercentComplete 0
+New-RemoteMailbox -Name $mbxName -OnPremisesOrganizationalUnit $mbxOU -Shared -DomainController $pdc | Out-Null
+$i = 0
+while (!(Get-RemoteMailbox $mbxName -DomainController $pdc) -and $i -le 10)
+{
+    Write-Progress -Activity "Creating Shared Mailbox....." -PercentComplete ($i*2)
+    Start-Sleep $i; $i++
+}
+if (!(Get-RemoteMailbox $mbxName -DomainController $pdc))
+{
+    Do
     {
-    ""
-    Write-Progress -Activity "Creating Shared Mailbox....." -Completed
-    Write-Host "Unable to create shared mailbox." -F Red
-    "";Pause;Exit
+        Write-Host "`nUnable to create shared mailbox." -F Red
+        $wait = Read-Host "Would you like to wait an additional 60 seconds (Y/N)"
+        if ($wait -eq 'Y') {Start-Sleep 60}
+        elseif ($wait -eq 'N') {Pause; Exit}
+        else {Write-Host "Please enter 'Y' or 'N' to continue" -F Red}
     }
+    Until (Get-ADUser $mbxName -Server $pdc)
+}
 
-Write-Progress -Activity "Creating Shared Mailbox....." -PercentComplete 20
 
 ##############################################################################################################################################################
 # Creates AD security group
 ##############################################################################################################################################################
 
-$info = "Grants access to shared mailbox: $mbname
-Created by: $admin - $date
-Ticket#: $ticket
-Script v.$version"
-
-New-DistributionGroup -Name $secgp -Type "Security" -OrganizationalUnit $gpou -Members $req -DomainController $pdc `
--ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
-
-Set-DistributionGroup -Identity $secgp -HiddenFromAddressListsEnabled $true -DomainController $pdc `
--ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
-
-Start-Sleep 2
-
-    If (!($(try {Get-ADGroup $secgp -Server $pdc} catch {$null})))
+Write-Progress -Activity "Creating Security Group....." -PercentComplete 20
+$i = 0
+While (!(Get-DistributionGroup $sgsmName -DomainController $pdc))
+{
+    New-DistributionGroup $sgsmName -OrganizationalUnit $sgsmOU -Alias $sgsmName -DomainController $pdc | Out-Null
+    Do
     {
-    "";Write-Progress -Activity "Creating Shared Mailbox....." -Completed
-    Write-Host "Unable to create security group." -F Red
-    "";Pause;Exit
+        Write-Progress -Activity "Creating Security Group....." -PercentComplete (20+$i*2)
+        Start-Sleep $i; $i++
+        If ($i -ge 1)
+        {
+            Write-Host "`nUnable to create security group. " -F Red -NoNewline
+            Do
+            {
+                $retry = Read-Host "Try again (Y/N)"
+                If ($retry -eq 'Y') {$i = 0; Break;Break;Break}
+                ElseIf ($retry -eq 'N') {Write-Host "Exiting --> " -F Red -NoNewline; Pause; Exit}
+                Else {Write-Host "Invalid selection. " -F Red -NoNewline}
+            }
+            Until ($retry -eq 'Y')
+        }
     }
+    Until (Get-ADGroup $sgsmName -Server $pdc)
+}
 
-Set-ADGroup $secgp -Replace @{info=$info} -Server $pdc 
-Set-ADGroup $secgp -Replace @{"extensionAttribute6"="365GS"} -Server $pdc
-Write-Progress -Activity "Creating Shared Mailbox....." -PercentComplete 30 
+
+Write-Progress -Activity "Configuring Security Group....." -PercentComplete 40
+Set-DistributionGroup $sgsmName -HiddenFromAddressListsEnabled $true -DomainController $pdc
+Set-ADGroup $sgsmName -GroupScope Universal -GroupCategory Security -ManagedBy $user -Server $pdc
+Add-ADGroupMember $sgsmName -Members $user -Server $pdc
+if ($addSelf -eq 'Y') {Add-ADGroupMember $sgsmName -Members $adminSam -Server $pdc}
+
+
+Write-Progress -Activity "Configuring Shared Mailbox....." -PercentComplete 60
+#Set-MailboxSentItemsConfiguration $mbxName -SendAsItemsCopiedTo SenderAndFrom -SendOnBehalfOfItemsCopiedTo SenderAndFrom
+Set-RemoteMailbox $mbxName -GrantSendOnBehalfTo $sgsmName -MessageCopyForSendOnBehalfEnabled
+Do
+{
+    Add-MailboxPermission $mbxName -User $sgsmName -AccessRights FullAccess -InheritanceType All -DomainController $pdc | Out-Null
+    $checkFullAccess = Get-MailboxPermission $mbxName -DomainController $pdc | ? {$_.User -like "*$sgsmName*" -and $_.AccessRights -like "*FullAccess*"}
+}
+Until ($checkFullAccess)
+
 
 ##############################################################################################################################################################
 # Sets group manager
 ##############################################################################################################################################################
 
+Write-Progress -Activity "Configuring Security Group Permissions....." -PercentComplete 70 
+$sgsmDN = (Get-ADGroup $sgsmName -Server $pdc).DistinguishedName
+try {dsacls "\\$pdc\$sgsmDN" /G "FBI\$user`:WP`;Member" | Out-Null}
+catch {Write-Host "Failed to check 'Manger can update membership list' box. Manually check the box in AD to allow the manager to update members." -F Red}
 
-Set-ADGroup $secgp -Managedby $req -Server $pdc 
-$gpnamedn = (Get-ADGroup $secgp -Server $pdc).distinguishedname
+Write-Progress -Activity "Configuring Shared Mailbox Permissions....." -PercentComplete 80
 
-dsacls "\\$pdc\$gpnamedn" /G FBI\$req`:WP`;member`; > $null
-$ckbox = dsacls "\\$pdc\$gpnamedn" | where {$_ -like "Allow FBI\$req*SPECIAL ACCESS for Add/Remove self as member"}
+$mbxDN = (Get-ADUser $mbxName -Server $pdc).DistinguishedName
+try {dsacls "\\$pdc\$mbxDN" /G "FBI\$sgsmName`:CA`;Send As" | Out-Null}
+catch {Write-Host "Failed to add 'Send As' permissions to the mailbox. Manually add the permission in the AD object's security tab." -F Red}
 
-If (!$ckbox){Write-Host "An error has occured. Manually check the box in AD to allow the manager to update members"}
+Write-Progress -Activity "Configuring Shared Mailbox Permissions....." -PercentComplete 90
 
-
-##############################################################################################################################################################
-# Sets mailbox permissions
-##############################################################################################################################################################
-
-add-mailboxpermission -Identity $mbname -User $secgp -AccessRights "Fullaccess" -InheritanceType "all" -DomainController $pdc `
--ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
-
-Set-Mailbox -Identity $mbname -MessageCopyForSentAsEnabled $true -MessageCopyForSendOnBehalfEnabled $true `
--ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
-
-Add-ADPermission -Identity $mbname -User $secgp -ExtendedRights "Send-As" -DomainController $pdc `
--ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
-
-Write-Progress -Activity "Creating Shared Mailbox....." -PercentComplete 50
 
 ##############################################################################################################################################################
 # Additional AD attributes
 ##############################################################################################################################################################
 
-$info = "Account for shared mailbox: $mbname
+$info = "Account for shared mailbox: $mbxName
 Created by: $admin - $date
 Ticket#: $ticket
 Script v.$version"
 
-Set-ADUser $mbname -EmployeeID "N/A (Mailbox)" -Replace @{info=$info} -Add @{"extensionAttribute6"="365GS,365EN"} -Server $pdc
-Write-Progress -Activity "Creating Shared Mailbox....." -PercentComplete 55
+Set-ADUser $mbxName -EmployeeID "N/A (Mailbox)" -Server $pdc
+Set-ADUser $mbxName -Add @{info=$info} -Server $pdc
+Set-ADUser $mbxName -Add @{"extensionAttribute6"="365GS"} -Server $pdc
+
+
+##############################################################################################################################################################
+# Error Checking
+##############################################################################################################################################################
+
+$mbx = Get-ADUser $mbxName -Properties * -Server $pdc
+$sgsm = Get-ADGroup $sgsmName -Properties * -Server $pdc
+$members = (Get-ADGroupMember $sgsmName -Server $pdc).SamAccountName
+
+if ($mbx.DistinguishedName -notlike "*OU=_Organizational Mailboxes,OU=UNET,DC=FBI,DC=GOV") {$ecArray += "Shared Mailbox in wrong OU, "}
+if ($mbx.EmployeeID -ne "N/A (Mailbox)") {$ecArray += "Shared Mailbox EID incorrect, "}
+if ($mbx.Enabled -eq $true) {$ecArray += "Shared Mailbox is enabled, "}
+if ($mbx.mail -ne "$mbxName@fbi.gov") {$ecArray += "Shared mailbox email does not match the name, "}
+#mbx security group send as
+#exch full access
+#mbx type is shared
+if ($members -notlike "*$user*") {$ecArray += "Security group membership does not include $user, "}
+if ($sgsm.ManagedBy -notlike (Get-ADUser $user).DistinguishedName) {$ecArray += "Security group manager is not $user, "}
+#sg check box
+if ($sgsm.GroupCategory -ne "Security") {$ecArray += "Security group category is not 'Security', "}
+if ($sgsm.GroupScope -ne "Universal") {$ecArray += "Security group scope is not 'Universal', "}
+#sg hide from address list
+$ecArray += ";"
+$ecArray = $ecArray -replace ", ;"
+
+Write-Progress -Activity "Creating Shared Mailbox Completed" -Completed
+
 
 ##############################################################################################################################################################
 # Console output
 ##############################################################################################################################################################
 
-for ($a=60; $a -lt 100; $a++) {Write-Progress -Activity "Creating Shared Mailbox....." -PercentComplete $a;Start-Sleep -Milliseconds 200}
-Write-Progress -Completed " "
-$emailaddress = (Get-AdUser -Filter {Name -like $mbname} -Properties EmailAddress -Server $pdc).EmailAddress
-"";""
-If (!($emailaddress)){Write-Host "Shared mailbox creation failed." -F Red;Pause;Exit}
-Write-Host "Shared mailbox creation complete. " -F Green;""
-Write-Host "Security Group: " -F Green -NoNewline; Write-Host $secgp -F magenta;""
-Write-Host "Email Address: " -F Green -NoNewline; Write-Host $emailaddress -F magenta;"";""
+if ($mbxEmail = (Get-AdUser $mbxName -Properties EmailAddress -Server $pdc).EmailAddress)
+{
+    Write-Host "`nShared mailbox creation complete." -F Green
+    Write-Host "`nSecurity Group: " -F Green -NoNewline; Write-Host $sgsmName -F magenta
+    Write-Host "`nEmail Address: " -F Green -NoNewline; Write-Host $mbxEmail -F magenta
+}
+else {Write-Host "`nShared mailbox creation failed." -F Red; Pause; Exit}
+
 
 ##############################################################################################################################################################
-# Enduser notIfication email
+# Enduser notification email
 ##############################################################################################################################################################
 
-$admeid = Get-ADUser $admin -properties EmployeeNumber,EmployeeID
-If ($admeid.EmployeeNumber -like "?????????"){$admeid = $admeid.EmployeeNumber}
-ElseIf ($admeid.EmployeeID -like "?????????"){$admeid = $admeid.EmployeeID}
-
-    If ($admeid -like "?????????")
-    {
-    $useraccount = $(try {(get-aduser -filter {EmployeeID -eq $admeid} | where {$_.SamAccountName -notlike "*-*"}).SamAccountName} catch {$null})
-    }
-
-    If (!$useraccount)
-    {
-        Do
-        {
-        $useraccount = Read-Host "Enter the username for your regular account, where emails can be sent from"
-        $useraccounttry = $(try {get-aduser $useraccount} catch {$null})
-            If (!($useraccounttry)) {"";Write-Host "Invalid username" -F Red}
-        }
-        Until ($useraccounttry)
-    }
-
-$from = (Get-ADUser $useraccount -Properties EmailAddress).EmailAddress
-$to = (Get-ADUser $req -Properties EmailAddress).EmailAddress
-$guide = "[INPUT PATH]\Shared Mailbox Guide.pdf"
-
+$fromMBX = $adminEmail
+$toMBX = (Get-ADUser $user -Properties EmailAddress).EmailAddress
+$subject = "Shared Mailbox Created -- $ticket"
 $body = "
 
-The shared mailbox --   $mbname   -- has been created. Please do not use it for 48 hours, to allow time for 
-it to be migrated to the Office 365 cloud. If the usage need is mission critical, please let me know, and the 
-migration request can be expedited. 
+The shared mailbox --   $mbxName   -- has been created. 
 
 Attached is a PDF guide that covers using the shared mailbox, including managing members who have access.
     
  
 
-Email Address:  $emailaddress
+Email Address:  $mbxEmail
 
-Display Name:  $mbname
+Display Name:  $mbxName
 
-Security Group:  $secgp
+Security Group:  $sgsmName
 
 
 
-It may take up to 30 minutes, before you will be able to manage member access.
+
+It may take up to 1 hour, before you will be able to manage member access.
+
+Please allow up to 72 hours for cloud migration in order to use the mailbox.
 
 
 
@@ -322,12 +359,14 @@ It may take up to 30 minutes, before you will be able to manage member access.
 
 
 "
-Send-MailMessage -From $from -To $to -CC $from -Subject "Shared Mailbox Created -- $ticket" -Body "$body" `
--Attachments $guide -SmtpServer Smtp.fbi.gov
+Send-MailMessage -From $fromMBX -To $toMBX -CC $fromMBX -Subject $subject -Body $body -Attachments $guide -SmtpServer $smtp
+
 
 ##############################################################################################################################################################
 #  Log File                                                  
 ##############################################################################################################################################################
+
+If (!(Test-Path $logPath)) {New-Item $logPath -ItemType Directory | Out-Null}
 
 $log = "
 *******************************************************************************
@@ -339,7 +378,7 @@ Created:  $date
 
 Administrator:  $admin
 
-
+Errors:  $ecArray
 
 *******************************************************************************
 
@@ -350,11 +389,11 @@ Administrator:  $admin
 
 
 
-Email Address:  $emailaddress
+Email Address:  $mbxEmail
 
-Display Name:  $mbname
+Display Name:  $mbxname
 
-Security Group:  $secgp
+Security Group:  $sgsmName
 
 
 
@@ -372,20 +411,12 @@ Security Group:  $secgp
 
 *******************************************************************************
 "
-Out-File -filepath "[LOG PATH]\Shared Mailboxes\$mbname.txt" -InputObject $log
+Out-File -FilePath "$logPath\$mbxName.txt" -InputObject $log | Out-Null
 
-"";""
-Write-Host $error1 -F Red
-Write-Host $error2 -F Red
-"";""
+"`n`n`n`n"
 
 Write-Host "----------------------------------------------------------------------------------------------------------------" -F Green
 Write-Host "Shared mailbox created........." -F Green
 Write-Host "----------------------------------------------------------------------------------------------------------------" -F Green
 
-##############################################################################################################################################################
-# Enduser notIfication email
-##############################################################################################################################################################
-
-If ($session){Remove-PSSession $session}
-Pause
+Stop_Script

@@ -2,7 +2,6 @@
 Function Start_Script
 {
   Import-Module ActiveDirectory
-  Remove-Variable * -Force -ErrorAction SilentlyContinue
   $psHost = Get-Host
   $psWindow = $psHost.UI.RawUI
   $newSize = $psWindow.BufferSize
@@ -19,14 +18,17 @@ Function Start_Script
   $Script:monthFN = Get-Date -F MMMM
   $Script:day = Get-Date -F dd
   $Script:dayFN = Get-Date -F ddd
-  $Script:smtp = "[SMTP.DOMAIN.COM]"
+  $Script:smtp = "[SMTP.DOMAIN.COM]" #PULL THIS FROM THE INI FILE
+  $Script:ErrorActionPreference = 'SilentlyContinue'
+  $Script:WarningPreference = 'SilentlyContinue'
 }
 
 Function Write_Banner
 {
   $title = ($Script:MyInvocation.MyCommand).Name -replace ".ps1", "$version"
   $l = (120-$title.Length)/16
-  $seperator = For ($s='-'; Write-Host $s; 80)
+  $seperator = 1..80 | % {Write-Host '-' -NoNewline} #THIS IS NOT WORKING?????
+  $seperator = '--------------------------------------------------------------------------------'
   Clear-Host
   Write-Host "`n$seperator`n$seperator`n`n" -F Cyan
   Do {Write-Host "`t" -NoNewLine; $l--}
