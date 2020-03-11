@@ -1,2 +1,5 @@
-aws s3 sync s3://[bucket]/ /etc/yum.repos.d/.
+aws s3 sync s3://[bucket]/ /etc/yum.repos.d
+$servers = ("Server A", "Server B")
 
+for $server in $servers; echo $server
+ssh connection; 

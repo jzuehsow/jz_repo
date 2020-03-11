@@ -1,19 +1,18 @@
-<###############################################################################################################################
+<#############################################################################################################################################################
 
-Created by: Jeremy Zuehsow
+Author: Jeremy Zuehsow
+Purpose: Launch menu for launcher scripts
 
-The purpose of this script is to perform ongoing Active Directory maintenance actions.
+Change Log:
 
-###############################################################################################################################>
-
-
-#launcher for scripts
-#Needs Review
-#List choices based on list of subfolders - ad, exch, file, etc
+#############################################################################################################################################################>
 
 
-cd $PSScriptRoot
-.".\config\common.ps1"
+Remove-variable * -ErrorAction 'SilentlyContinue'
+."..\Config\Common.ps1"
+$version = '1.0'
+
+Start_Script
 
 $configFile = ".\config\config.ini"
 $configFQName = Get-ChildItem -Path $configFile| Select-Object FullName
