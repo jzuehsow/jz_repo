@@ -1,0 +1,14 @@
+---
+- hosts: dev:!clus
+  name: Patch Dev Servers
+  become:
+  tasks:
+    - name: Patch Servers
+      yum:
+        name: '*'
+        state: latest
+        skip_broken: yes
+    - name: Reboot Servers
+      reboot:
+	post_reboot_delay: 120
+           test_command: hostname
