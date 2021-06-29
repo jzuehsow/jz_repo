@@ -189,7 +189,7 @@ If ($rmselection -eq "4")
 {
 New-PSDrive -Name mailscript -PSProvider ActiveDirectory -Root //RootDSE/ -ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
 $secgppath = "mailscript:\" + ((Get-ADGroup $groupname).distinguishedname)
-$rmacl = (get-acl $secgppath).Access | Where {$_.IsInherited -eq $false -and $_.IdentityReference -like "fbi\*" -and $_.ActiveDirectoryRights -eq "WriteProperty"}
+$rmacl = (get-acl $secgppath).Access | Where {$_.IsInherited -eq $false -and $_.IdentityReference -like "GREEN\*" -and $_.ActiveDirectoryRights -eq "WriteProperty"}
 If ($rmacl) {$rmmanagers = $rmacl.IdentityReference.Value}
 Remove-PSDrive mailscript -ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
 
@@ -281,7 +281,7 @@ If ($rmselection -eq "6")
     Set-acl -aclobject $rmacl $secgppath
 
     $secgppath = "mailscript:\" + ((Get-ADGroup $groupname).distinguishedname)
-    $rmacl = (get-acl $secgppath).Access | Where {$_.IsInherited -eq $false -and $_.IdentityReference -eq "FBI\$rmmanager" -and $_.ActiveDirectoryRights -eq "WriteProperty"}
+    $rmacl = (get-acl $secgppath).Access | Where {$_.IsInherited -eq $false -and $_.IdentityReference -eq "GREEN\$rmmanager" -and $_.ActiveDirectoryRights -eq "WriteProperty"}
     Remove-PSDrive mailscript -ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
         
         ""
@@ -306,7 +306,7 @@ If ($rmselection -eq "7")
 {
 New-PSDrive -Name mailscript -PSProvider ActiveDirectory -Root //RootDSE/ -Server $pdc -ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
 $secgppath = "mailscript:\" + ((Get-ADGroup $groupname).distinguishedname)
-$rmacl = (get-acl $secgppath).Access | Where {$_.IsInherited -eq $false -and $_.IdentityReference -like "fbi\*" -and $_.ActiveDirectoryRights -eq "WriteProperty"}
+$rmacl = (get-acl $secgppath).Access | Where {$_.IsInherited -eq $false -and $_.IdentityReference -like "GREEN\*" -and $_.ActiveDirectoryRights -eq "WriteProperty"}
 If ($rmacl) {$rmmanagers = $rmacl.IdentityReference.Value}
 Remove-PSDrive mailscript -ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
 
@@ -349,7 +349,7 @@ Write-Host "Below are the group managers:" -F Green
     Set-acl -aclobject $rmacl $secgppath
     
     $secgppath = "mailscript:\" + ((Get-ADGroup $groupname).distinguishedname)
-    $rmacl = (get-acl $secgppath).Access | Where {$_.IsInherited -eq $false -and $_.IdentityReference -eq "FBI\$rmmanager" -and $_.ActiveDirectoryRights -eq "WriteProperty"}
+    $rmacl = (get-acl $secgppath).Access | Where {$_.IsInherited -eq $false -and $_.IdentityReference -eq "GREEN\$rmmanager" -and $_.ActiveDirectoryRights -eq "WriteProperty"}
     Remove-PSDrive mailscript -ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null
         
         ""

@@ -76,8 +76,8 @@ $RED = Import-Csv $REDpath;$RED = $RED | Where {$_.EmployeeID -like "?????????" 
         }
 
     If ($i -gt $maxchanges){Send-MailMessage -From $notifyaddress -To $notifyaddress -Subject "*** Attribute Sync Error ***" `
-    -Body "The attribute sync task has exceeded $maxchanges changes and has been stopped." -SmtpServer smtp.GREEN.gov;Exit}
+    -Body "The attribute sync task has exceeded $maxchanges changes and has been stopped." -SmtpServer smtp.GREEN.com;Exit}
     }
 }
 If ($failed -eq $true){Send-MailMessage -From $notifyaddress -To $notifyaddress -Subject "*** Attribute Sync Error ***" `
--Body "The attribute sync contains an invalid attribute and has been stopped." -SmtpServer smtp.GREEN.gov;Exit}
+-Body "The attribute sync contains an invalid attribute and has been stopped." -SmtpServer smtp.GREEN.com;Exit}

@@ -247,7 +247,7 @@ function Audit_Containers
                 if ($objectClass -eq 'user') {"Move-ADObject $object -TargetPath $usersOU" | Write-Host}
                 elseif ($objectClass -eq 'group') {"Move-ADObject $object -TargetPath $groupsOU" | Write-Host}
                 elseif ($objectClass -eq 'contact') {"Move-ADObject $object -TargetPath $contactsOU" | Write-Host}
-                else {"Move-ADObject $object -TargetPath $unetOU" | Write-Host}
+                else {"Move-ADObject $object -TargetPath $GREENOU" | Write-Host}
                 #>
                 $line = "$date The $objectClass $objectName was found in the $container container and was created $objectCreated by "
                 if ($userEmail) {$line = $line + "$userFN $userLN. Please contact user at $userEmail."}
