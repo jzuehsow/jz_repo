@@ -30,7 +30,7 @@ $notifyaddress = "[]"
 
 # Checks if specified attributes are valid
 $attributes = $attributes.Split(",");$badattrib = $null;$failed = $false;$errorexists = $null
-$header = Get-Content -Path $fbinetpath -TotalCount 1
+$header = Get-Content -Path $REDPath -TotalCount 1
 Foreach ($attribute in $attributes){If ($header -notlike "*$attribute*"){$failed = $true}}
 If ($failed -eq $false){
     Foreach ($attribute in $attributes){Get-ADUser -Filter * -ResultSetSize 1 -Properties $attribute -ErrorVariable errorexists  > $null
@@ -39,7 +39,7 @@ If ($failed -eq $false){
 
 # Function to log changes
 Function changelog {
-$hash =[pscustomobject]@{SamAccountName = $rmuser;EmployeeID = $rmeid;Attribute = $attribute;PreChange = $unetvalue;PostChange = $REDvalue}
+$hash =[pscustomobject]@{SamAccountName = $rmuser;EmployeeID = $rmeid;Attribute = $attribute;PreChange = $GREENValue;PostChange = $REDvalue}
 $hash | export-csv $log -NoTypeInformation -Append;$hash = @{}
 }
 
@@ -57,8 +57,8 @@ $RED = Import-Csv $REDpath;$RED = $RED | Where {$_.EmployeeID -like "?????????" 
         {
             Foreach ($attribute in $attributes)
             {
-            $unetvalue = $null;$REDvalue = $null
-            $unetvalue = (Get-ADUser $rmuser -Properties $attribute).$attribute
+            $GREENValue = $null;$REDvalue = $null
+            $GREENValue = (Get-ADUser $rmuser -Properties $attribute).$attribute
             $REDvalue = "`$line." +  $attribute;$REDvalue = Invoke-Expression $REDvalue
             
                 If ($attribute -eq "DisplayName")
@@ -70,14 +70,14 @@ $RED = Import-Csv $REDpath;$RED = $RED | Where {$_.EmployeeID -like "?????????" 
                     $REDvalue = $REDvalue -replace "ii","II" -replace "iii","III" -replace "iv","IV"}
                 }
                 $command1 = "Set-ADUser $rmuser -Clear $attribute";$command2 = "Set-ADUser $rmuser -$attribute `"$REDvalue`""            
-                If (!$REDvalue -and $unetvalue){Invoke-Expression $command1;changelog;$i++}
+                If (!$REDvalue -and $GREENValue){Invoke-Expression $command1;changelog;$i++}
                 ElseIf ($GREENvalue -ne $REDvalue -and $REDvalue){Invoke-Expression $command2;changelog;$i++}
             }
         }
 
     If ($i -gt $maxchanges){Send-MailMessage -From $notifyaddress -To $notifyaddress -Subject "*** Attribute Sync Error ***" `
-    -Body "The attribute sync task has exceeded $maxchanges changes and has been stopped." -SmtpServer Smtp.fbi.gov;Exit}
+    -Body "The attribute sync task has exceeded $maxchanges changes and has been stopped." -SmtpServer smtp.GREEN.gov;Exit}
     }
 }
 If ($failed -eq $true){Send-MailMessage -From $notifyaddress -To $notifyaddress -Subject "*** Attribute Sync Error ***" `
--Body "The attribute sync contains an invalid attribute and has been stopped." -SmtpServer Smtp.fbi.gov;Exit}
+-Body "The attribute sync contains an invalid attribute and has been stopped." -SmtpServer smtp.GREEN.gov;Exit}
