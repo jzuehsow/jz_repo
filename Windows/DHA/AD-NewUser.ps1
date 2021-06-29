@@ -273,7 +273,7 @@ If ($(try {get-aduser $rmuser} catch {$null}))
 Set-ADUser $rmuser -Replace  @{extensionAttribute6="365GS"}
 Set-ADUser $rmuser -Replace  @{info="Created $date. Script v$version"}
 Get-aduser $rmuser | Rename-ADObject -NewName $rmname 
-Enable-RemoteMailbox -Identity $rmuser -RemoteRoutingAddress "$rmuser@dojfbi.mail.onmicrosoft.com" -DomainController $pdc `
+Enable-RemoteMailbox -Identity $rmuser -RemoteRoutingAddress "$rmuser@[MAIL_DOMAIN]" -DomainController $pdc `
                      -ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null 
     $ii = 1
     Do

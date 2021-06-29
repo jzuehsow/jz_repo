@@ -68,26 +68,26 @@ Until ($rmapproveeid -eq "Y" -or !$rmeid)
 
 Do
 {
-"";$rmREDaccount = Read-Host "Does the user have an account (Y/N)"
+"";$rmREDAccount = Read-Host "Does the user have an account (Y/N)"
 }
-Until ($rmREDaccount -eq "Y" -or $rmREDaccount -eq "N")
+Until ($rmREDAccount -eq "Y" -or $rmREDAccount -eq "N")
 
-If ($rmREDaccount -eq "Y")
+If ($rmREDAccount -eq "Y")
 {
 ""    
     Do
     {
-    $rmfbinetchanged = Read-Host "Has the user's name been changed on (Y/N)"
+    $rmRedChanged = Read-Host "Has the user's name been changed on (Y/N)"
     }
-    Until ($rmREDchanged -eq "Y" -or $rmREDchanged -eq "N")
-        If ($rmREDchanged -eq "N"){"";Write-Host "The user's name must be changed on before changing ." -F Red;Pause;Exit}
+    Until ($rmREDChanged -eq "Y" -or $rmREDChanged -eq "N")
+        If ($rmREDChanged -eq "N"){"";Write-Host "The user's name must be changed on before changing ." -F Red;Pause;Exit}
 }
 
-If ($rmREDaccount -eq "Y")
+If ($rmREDAccount -eq "Y")
 {
-"";$rmnewuser = Read-Host "Enter users FBINET username";$rmnewuser = $rmnewuser.toupper();""
+"";$rmnewuser = Read-Host "Enter users RED username";$rmnewuser = $rmnewuser.toupper();""
 $rmmanualtest = $(try {get-aduser $rmnewuser} catch {$null})    
-    If ($rmmanualtest -and $rmnewuser -ne $rmolduser){Write-Host "Username already in use on FBINET. Resolve naming conflict...." -F Red;Pause;Exit}
+    If ($rmmanualtest -and $rmnewuser -ne $rmolduser){Write-Host "Username already in use on RED. Resolve naming conflict...." -F Red;Pause;Exit}
 }
 
 
@@ -174,7 +174,7 @@ $rmname = $rmdisplayname.Split("(")[0];$rmname = $rmname.Substring(0,($rmname.Le
 ###                                           Creates Variable for New User Name                                         ###
 ############################################################################################################################
 
-If ($rmfbinetaccount -eq "N")
+If ($rmREDAccount -eq "N")
 {
 
 $rmfirstnameletter = $rmGivenName.Substring(0,1)
@@ -182,24 +182,24 @@ $rmnewuser = "$rmfirstnameletter$rmmiddlenameletter$rmSurname"
 $rmnewuser = $rmnewuser.replace(" ","")
 
 Write-Progress -Activity "Checking for available usernames. Please wait......" -PercentComplete 50
-$FBINETcsv = (Import-csv $csv | where {$_.SamAccountName -like "$rmnewuser*"})
+$REDcsv = (Import-csv $csv | where {$_.SamAccountName -like "$rmnewuser*"})
 
 $rmnewusertry = $rmnewuser
 
     Do
     {
 
-    $rmunettest = $null
-    $rmfbinettest = $null
+    $rmGREENTest = $null
+    $rmREDTest = $null
     $rmnewuser = "$rmnewusertry$rmnumber"
-    $rmfbinettest = ($FBINETcsv | where {$_.SamAccountName -eq "$rmnewuser"})
-    $rmunettest = $(try {get-aduser $rmnewuser} catch {$null})
+    $rmREDTest = ($REDcsv | where {$_.SamAccountName -eq "$rmnewuser"})
+    $rmGREENTest = $(try {get-aduser $rmnewuser} catch {$null})
         
         # Number 1 is purposly skipped
         If (!($rmnumber)) {$rmnumber = 1}
         $rmnumber++
     }
-    Until ($rmfbinettest -eq $null -and $rmunettest -eq $null)
+    Until ($rmREDTest -eq $null -and $rmGREENTest -eq $null)
 
 Write-Progress -Activity "Checking for available usernames. Please wait......" -Completed
 
@@ -418,7 +418,7 @@ New Username:   $rmnewuser
 
 
 "
-Send-MailMessage -From $rmfromemail -To "" -CC "" -Subject "Name Change -- $rmticket" -Body $body -SmtpServer Smtp.fbi.gov
+Send-MailMessage -From $rmfromemail -To "" -CC "" -Subject "Name Change -- $rmticket" -Body $body -SmtpServer smtp.GREEN.com
 
 }
 
