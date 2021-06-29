@@ -15,14 +15,19 @@ $version = '1.1'
 
 Start_Script
 
-#IF STATEMENT TO GET CSV; MANDATORY CSV HEADERS?
 $csv = '.\NewComputers.csv'
+computersOU = 'OU=COMPUTERS,OU=HELPDESK,OU=SITE,OU=REGION,DC=MICROSOFT,DC=CONTOSO,DC=COM'
+$vlan = '8021x_VLAN'  #OPTIONAL
 
-#IF STATEMENT TO TARGET OU
-$ou = 'OU=COMPUTERS,OU=HELPDESK,OU=SITE,OU=REGION,DC=MICROSOFT,DC=CONTOSO,DC=COM'
-
-#OPTIONAL
-$vlan = '8021x_VLAN'
+If (!(Test-Path $csv))
+{
+    Do
+    {
+        Write-Host "CSV Not Found`n" -F Red
+        $csv = Read-Host "Enter CSV File Path"
+    }
+    Until (Test-Path $csv)
+}
 
 $newComputers = Import-Csv -Path $csv
 ForEach ($computer in $newComputers)
