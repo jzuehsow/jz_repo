@@ -22,16 +22,7 @@ $adfsF5Primary = "[LOAD BALANCER WEB CONSOLE 1]"
 $adfsF5Secondary = "[Load BALANCER WEB CONSOLE 2]"
 $svc = 'adfssrv'
 $svcDisp = 'Active Directory Federation Services'
-$header1 = '
--------------------------------------------------------------------------
-PRIMARY ADFS SERVERS
--------------------------------------------------------------------------
-'
-$header2 = '
--------------------------------------------------------------------------
-SECONDARY ADFS SERVERS
--------------------------------------------------------------------------
-'
+
 $serversPrimary = @(
 '[ADFSSERVER1]',
 '[ADFSSERVER2]',
@@ -90,8 +81,14 @@ Function Monitor_ADFS_Server
 Function Monitor_ADFS
 {
 	Write_Banner
-	$header1; ForEach ($server in $serversPrimary) {Monitor_ADFS_Server}
-	$header2; ForEach ($server in $serversSecondary) {Monitor_ADFS_Server}
+	'-------------------------------------------------------------------------
+	PRIMARY ADFS SERVERS
+	-------------------------------------------------------------------------'
+	ForEach ($server in $serversPrimary) {Monitor_ADFS_Server}
+	'-------------------------------------------------------------------------
+	SECONDARY ADFS SERVERS
+	-------------------------------------------------------------------------'
+	ForEach ($server in $serversSecondary) {Monitor_ADFS_Server}
 }
 
 Function Check_LB
