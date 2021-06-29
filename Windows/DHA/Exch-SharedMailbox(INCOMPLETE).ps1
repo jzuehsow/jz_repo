@@ -50,7 +50,7 @@ Do
         {
             Do
             {
-				Write-Host "`nEnter only the mailbox name. Do not include domain (e.g. @FBI.SGOV.GOV)." -F Red
+				Write-Host "`nEnter only the mailbox name. Do not include domain (e.g. @GREEN.SGOV.GOV)." -F Red
 				$mbxNameTemp = $mbxName.Substring(0,$mbxName.IndexOf('@'))
 				Write-Host "`nThe new mailbox name is: " -NoNewline; Write-Host $mbxNameTemp –F Magenta
 				If ((Read-Host "`nAccept new mailbox name (Y/N)") -eq 'Y') {$mbxName = $mbxNameTemp; Break}
@@ -134,7 +134,7 @@ Until ($addSelf)
 ##############################################################################################################################################################
 
 Write-Progress –Activity "Creating Shared Mailbox....." -PercentComplete 0
-New-Mailbox –Name $mbxName –OrganizationalUnit $mbxOU –DisplayName $mbxName –UserPrincipalName "$mbxName@admin.fbi" -Alias $mbxName –Shared –DomainController $pdc | Out-Null
+New-Mailbox –Name $mbxName –OrganizationalUnit $mbxOU –DisplayName $mbxName –UserPrincipalName "$mbxName@admin.GREEN" -Alias $mbxName –Shared –DomainController $pdc | Out-Null
 $i = 0
 While (!(Get-mailbox $mbxname –DomainController $pdc) -and $i –le 10)
 {

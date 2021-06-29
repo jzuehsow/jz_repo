@@ -10,7 +10,7 @@
 
 $version = "2.0";$errorpref = "SilentlyContinue";$adm = $env:username;$svr = $env:COMPUTERNAME;$date194 = (Get-Date).adddays(-194);$date = Get-Date -Format MM/dd/yy
 
-$csv = "[INPUT PATH]\FBINET-Export.csv"
+$csv = "[INPUT PATH]\RED-Export.csv"
 $log = "[LOGS PATH]\Unarchived Users"
 
 ##############################################################################################################################################################
@@ -89,7 +89,7 @@ Set-ADAccountPassword $rmuser -Reset -NewPassword $pswd;""
 # check and attributes
 ##############################################################################################################################################################
 
-Write-Progress -Activity "Checking FBINET for account status......" -PercentComplete 33
+Write-Progress -Activity "Checking RED for account status......" -PercentComplete 33
 $rmreduser = (Import-csv $csv | where {$_.EmployeeID -eq $rmeid -and $_.SamAccountName -notlike "[1-9]*"})
 $rmreduser = $rmreduser | sort {$_.LastLogonDate -as [datetime]} -Descending | Select -First 1
 
@@ -159,7 +159,7 @@ $rmdn = $rmreduser.DistinguishedName
     }
     Else{$rmreduser = $null}
 }
-Write-Progress -Activity "Checking FBINET for account status......" -Completed
+Write-Progress -Activity "Checking RED for account status......" -Completed
 If (!$rmou)
 {
     Do
@@ -225,14 +225,14 @@ Else
 
 Write-Progress -Activity "Unarchiving user $rmuser......" -PercentComplete 75
 Set-RemoteMailbox $rmuser -HiddenFromAddressListsEnabled $false -WarningAction $errorpref -ErrorAction $errorpref > $null
-$rmtest1 = Get-MsolUser -UserPrincipalName "$rmuser@FBI.GOV" -ReturnDeletedUsers
-$rmtest2 = Get-MsolUser -UserPrincipalName "$rmuser@FBI.GOV"
-$rmtest3 = Get-MsolUser -HasErrorsOnly -SearchString "$rmuser@FBI.GOV"
+$rmtest1 = Get-MsolUser -UserPrincipalName "$rmuser@GREEN.GOV" -ReturnDeletedUsers
+$rmtest2 = Get-MsolUser -UserPrincipalName "$rmuser@GREEN.GOV"
+$rmtest3 = Get-MsolUser -HasErrorsOnly -SearchString "$rmuser@GREEN.GOV"
 If (!$rmtest1 -and !$rmtest2 -or $rmtest3)
 {
 Disable-Mailbox -Identity $rmuser -Confirm:$false -DomainController $pdc
 Disable-RemoteMailbox -Identity $rmuser -Confirm:$false -DomainController $pdc
-Enable-RemoteMailbox -Identity $rmuser -RemoteRoutingAddress "$rmuser@dojfbi.mail.onmicrosoft.com" -DomainController $pdc > $null
+Enable-RemoteMailbox -Identity $rmuser -RemoteRoutingAddress "$rmuser@O365GREEN.mail.onmicrosoft.com" -DomainController $pdc > $null
 $rmmbcreated = $true
 }
 Else {$rmmbcreated = $false}

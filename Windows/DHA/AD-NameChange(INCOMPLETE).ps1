@@ -47,28 +47,28 @@ Until ($rmapproveeid -eq "Y")
 Do
 {
 ""
-$rmfbinetaccount = Read-Host "Does the user have an FBINET account (Y/N)"
+$rmREDAccount = Read-Host "Does the user have an RED account (Y/N)"
 }
-Until ($rmfbinetaccount -eq "Y" -or $rmfbinetaccount -eq "N")
+Until ($rmREDAccount -eq "Y" -or $rmREDAccount -eq "N")
 
-If ($rmfbinetaccount -eq "Y")
+If ($rmREDAccount -eq "Y")
 {
 ""    
     Do
     {
-    $rmfbinetchanged = Read-Host "Has the user's name been changed on FBINET (Y/N)"
+    $rmREDChanged = Read-Host "Has the user's name been changed on RED (Y/N)"
     }
-    Until ($rmfbinetchanged -eq "Y" -or $rmfbinetchanged -eq "N")
+    Until ($rmREDChanged -eq "Y" -or $rmREDChanged -eq "N")
 
-        If ($rmfbinetchanged -eq "N"){"";Write-Host "The user's name must be changed on FBINET before changing UNET." -F Red;Pause;Exit}
+        If ($rmREDChanged -eq "N"){"";Write-Host "The user's name must be changed on RED before changing GREEN." -F Red;Pause;Exit}
 }
 
-    If ($rmfbinetaccount -eq "Y")
+    If ($rmREDAccount -eq "Y")
     {
-    "";$rmnewuser = Read-Host "Enter users FBINET username";$rmnewuser = $rmnewuser.toupper();""
+    "";$rmnewuser = Read-Host "Enter users RED username";$rmnewuser = $rmnewuser.toupper();""
     $rmmanualtest = $(try {get-aduser $rmnewuser} catch {$null})
     
-        If ($rmmanualtest -and $rmnewuser -ne $rmolduser){Write-Host "Username already in use on FBINET. Resolve naming conflict...." -F Red;Pause;Exit}
+        If ($rmmanualtest -and $rmnewuser -ne $rmolduser){Write-Host "Username already in use on RED. Resolve naming conflict...." -F Red;Pause;Exit}
     }
 
 ##############################################################################################################################################################
@@ -125,31 +125,31 @@ $rmname = $rmdisplayname.Split("(")[0];$rmname = $rmname.Substring(0,($rmname.Le
 ##############################################################################################################################################################
 
 
-If ($rmfbinetaccount -eq "N")
+If ($rmREDAccount -eq "N")
 {
 $rmfsltr = $rmGivenName.Substring(0,1)
 $rmnewuser = "$rmfsltr$rmmnltr$rmSurname"
 $rmnewuser = $rmnewuser.replace(" ","")
 
 Write-Progress -Activity "Checking for available usernames. Please wait......" -PercentComplete 50
-$FBINETcsv = (Import-csv $csv | where {$_.SamAccountName -like "$rmnewuser*"})
+$REDcsv = (Import-csv $csv | where {$_.SamAccountName -like "$rmnewuser*"})
 
 $rmnewusertry = $rmnewuser
 
     Do
     {
-    $rmunettest = $null
-    $rmfbinettest = $null
+    $rmGREENTest = $null
+    $rmREDTest = $null
     $rmnewuser = "$rmnewusertry$rmnumber"
-    $rmfbinettest = ($FBINETcsv | where {$_.SamAccountName -eq "$rmnewuser"})
-    $rmunettest = $(try {get-aduser $rmnewuser} catch {$null})
+    $rmREDTest = ($REDcsv | where {$_.SamAccountName -eq "$rmnewuser"})
+    $rmGREENTest = $(try {get-aduser $rmnewuser} catch {$null})
         
         # Number 1 is purposly skipped
         If (!($rmnumber)) {$rmnumber = 1}
         $rmnumber++
 
     }
-    Until ($rmfbinettest -eq $null -and $rmunettest -eq $null)
+    Until ($rmREDTest -eq $null -and $rmGREENTest -eq $null)
 
 $rmnewuser = $rmnewuser -replace " ",""
 Write-Progress -Completed " ";";"
@@ -174,7 +174,7 @@ Until ($rmacceptusername -eq "Y" -or $rmacceptusername -eq "N")
     
         If ($rmmanualtest -and $rmnewuser -ne $rmolduser)
         {
-        Write-Host "Username already in use on UNET. Resolve naming conflict...." -F Red;Pause;Exit
+        Write-Host "Username already in use on GREEN. Resolve naming conflict...." -F Red;Pause;Exit
         }
     }
 }
@@ -184,7 +184,7 @@ Until ($rmacceptusername -eq "Y" -or $rmacceptusername -eq "N")
 ##############################################################################################################################################################
 
 Set-ADUser -Identity $rmSID -SamAccountName "$rmnewuser"
-Set-ADUser -Identity $rmSID -UserPrincipalName "$rmnewuser@FBI.GOV"
+Set-ADUser -Identity $rmSID -UserPrincipalName "$rmnewuser@GREEN.GOV"
 
 for ($a=1; $a -lt 100; $a++) 
 {
@@ -197,7 +197,7 @@ $rmchangepass = $(try {get-aduser $rmnewuser} catch {$null})
 If (!($rmchangepass))
 {
 Set-ADUser -Identity $rmSID -SamAccountName "$rmolduser"
-Set-ADUser -Identity $rmSID -UserPrincipalName "$rmolduser@FBI.GOV"
+Set-ADUser -Identity $rmSID -UserPrincipalName "$rmolduser@GREEN.GOV"
 Write-Host "**** Name change failed. You do not have appropriate permissions ****" -F Red
 Exit;Pause
 }
@@ -210,7 +210,7 @@ $exsvrs = (Get-ADComputer -Filter {Name -like "HQV2-UO365-*"}).Name
 Foreach ($exsvr in $exsvrs)
 {
     If (Test-Connection $exsvr -Count 2){
-    $session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://$exsvr.FBI.GOV/Powershell/
+    $session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://$exsvr.GREEN.GOV/Powershell/
     Import-PSSession $session -DisableNameChecking -AllowClobber -Verbose:$false -ErrorAction Stop | Out-Null
     Break}
 }
@@ -256,7 +256,7 @@ Set-ADUser -Identity $rmSID -Clear MiddleName
 #   Email Address                                    
 ##############################################################################################################################################################
 
-$rmnewemail = "$rmnewuser@FBI.GOV";$rmnewemail = $rmnewemail.ToLower();$rmnewemail = $rmnewemail -replace " ",""
+$rmnewemail = "$rmnewuser@GREEN.GOV";$rmnewemail = $rmnewemail.ToLower();$rmnewemail = $rmnewemail -replace " ",""
 
 $rmtest1 = Get-RemoteMailbox $rmolduser -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
 If (!$rmtest1){$rmtest2 = Get-Mailbox $rmolduser -WarningAction SilentlyContinue -ErrorAction SilentlyContinue}  
@@ -295,7 +295,7 @@ Foreach ($item in $rmproxies.proxyaddresses)
     }
 }
 
-Set-ADUser -Identity $rmSID -add @{proxyAddresses = "SMTP:$rmnewuser@FBI.GOV"}
+Set-ADUser -Identity $rmSID -add @{proxyAddresses = "SMTP:$rmnewuser@GREEN.GOV"}
 Set-ADUser -Identity $rmSID -EmailAddress $rmnewemail
 
 ##############################################################################################################################################################
@@ -311,7 +311,7 @@ $rmerror1 = "Mailbox alias update failed."
 
 If ($rmerror -eq $null -and $rmerror1 -eq $null) {$rmerror = "None"}
 "";Write-Host "Name change complete....." -F Green;""
-Write-Host "Notify the user by FBINET email of the name change completion." -F Green
+Write-Host "Notify the user by RED email of the name change completion." -F Green
 ";"
 
 Write-Host "New username is: $rmnewuser
@@ -326,7 +326,7 @@ New display name is: $rmDisplayName" -F magenta
 
 $rmlogfile = "
 *******************************************************************************
-   NAME CHANGE     ::     UNET - Name change script: Version $version                                  
+   NAME CHANGE     ::     GREEN - Name change script: Version $version                                  
 *******************************************************************************
 
 

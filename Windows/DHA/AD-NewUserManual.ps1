@@ -82,7 +82,7 @@ $sam = $rmtest.SamAccountName
 }
 Else
 {
-"";Write-Host "No account found on UNET or FBINET. Manually enter the user's information to create a new account." -F Yellow;""
+"";Write-Host "No account found on GREEN or RED. Manually enter the user's information to create a new account." -F Yellow;""
 }
 
 Write-Progress -Activity "Checking if account exists on []. Please wait......" -PercentComplete 50
@@ -101,7 +101,7 @@ $rmoffice = $REDest.Office
 $rmtitle = $REDest.Title
 $rmeid = $REDest.EmployeeID
 $rmdn = $REDest.DistinguishedName
-"";Write-Host "An account was found on FBINET matching the Employee ID entered ($rmdisplayname)." -F Yellow;""
+"";Write-Host "An account was found on RED matching the Employee ID entered ($rmdisplayname)." -F Yellow;""
 }
 Else
 {
@@ -124,16 +124,16 @@ $rmtype = Read-Host "Enter selection for employee type"
 }
 Until ($rmtype -like "[1-9]" -or $rmtype -eq 10)
 
-If ($rmtype -eq 1) {$rmtype = "FBI"}
-If ($rmtype -eq 2) {$rmtype = "FBI"}
-If ($rmtype -eq 3) {$rmtype = "FBI"}
-If ($rmtype -eq 4) {$rmtype = "CON"}
-If ($rmtype -eq 5) {$rmtype = "OGA"}
-If ($rmtype -eq 6) {$rmtype = "OGA"}
-If ($rmtype -eq 7) {$rmtype = "TFO"}
-If ($rmtype -eq 8) {$rmtype = "INT"}
-If ($rmtype -eq 9) {$rmtype = "OGA"}
-If ($rmtype -eq 10) {$rmtype = "HIG"}
+If ($rmtype -eq 1) {$rmtype = "ORG1"}
+If ($rmtype -eq 2) {$rmtype = "ORG2"}
+If ($rmtype -eq 3) {$rmtype = "ORG3"}
+If ($rmtype -eq 4) {$rmtype = "ORG4"}
+If ($rmtype -eq 5) {$rmtype = "ORG5"}
+If ($rmtype -eq 6) {$rmtype = "ORG6"}
+If ($rmtype -eq 7) {$rmtype = "ORG7"}
+If ($rmtype -eq 8) {$rmtype = "ORG8"}
+If ($rmtype -eq 9) {$rmtype = "ORG9"}
+If ($rmtype -eq 10) {$rmtype = "ORG0"}
 
 ""
 Do
@@ -242,7 +242,7 @@ Write-Progress -Activity "Provisioning user $rmuser......" -PercentComplete 5
 # Displayname Determination
 ###################################################################################################################################################################
 
-If ((!$FBINETtest) -and $rmou -ne "[USERS CONTAINER]")
+If ((!$REDTest) -and $rmou -ne "[USERS CONTAINER]")
 {
 $rmsample = Get-ADUser -Filter * -Properties DisplayName -ResultSetSize 100 -SearchBase $rmou
 
@@ -359,7 +359,7 @@ Write-Host $footer -F Green ; Pause ; Exit
 #   Creates Variable for New User Name                                         
 ###################################################################################################################################################################
 
-If (!$FBINETtest)
+If (!$REDTest)
 {
 $i = $null
 $rmfirstnameletter = $rmGivenName.Substring(0,1)
@@ -368,20 +368,20 @@ $rmuser = "$rmfirstnameletter$rmmiddlenameletter$rmSurname"
 $rmuser = $rmuser.replace(" ","")
 
 Write-Progress -Activity "Checking for available usernames. Please wait......" -PercentComplete 50
-$FBINETcsv = (Import-csv $csv | where {$_.SamAccountName -like "$rmuser*"})
+$REDcsv = (Import-csv $csv | where {$_.SamAccountName -like "$rmuser*"})
 $rmusertry = $rmuser
 Do
 {
-$rmunettest = $null
-$rmfbinettest = $null
+$rmGreenTest = $null
+$rmREDTest = $null
 $rmuser = "$rmusertry$i"
-$rmfbinettest = ($FBINETcsv | where {$_.SamAccountName -eq $rmuser -and $_.EmployeeID -ne $rmeid})
-$rmunettest = $(try {get-aduser $rmuser} catch {$null})        
+$rmREDTest = ($REDcsv | where {$_.SamAccountName -eq $rmuser -and $_.EmployeeID -ne $rmeid})
+$rmGreenTest = $(try {get-aduser $rmuser} catch {$null})        
 $i++
     # Number 1 is purposly skipped
     If ($i -eq 1) {$i = 2}
 }
-Until ($rmfbinettest -eq $null -and $rmunettest -eq $null)
+Until ($rmREDTest -eq $null -and $rmGreenTest -eq $null)
 $rmuser = $rmuser -replace " ",""
 $rmuser = $rmuser.ToLower()
 Write-Progress -Completed " "
@@ -393,7 +393,7 @@ Write-Progress -Completed " "
 
 If ($(try {get-aduser $rmuser} catch {$null}))
 {
-Write-Host "SamAccountName already taken on UNET. Resolve conflict." -F Red ; Pause ; Exit
+Write-Host "SamAccountName already taken on GREEN. Resolve conflict." -F Red ; Pause ; Exit
 }
 
 ##############################################################################################################################################################
@@ -423,7 +423,7 @@ If ($(try {get-aduser $rmuser} catch {$null}))
 Set-ADUser $rmuser -Replace  @{extensionAttribute6="365GS,365EN"}
 Set-ADUser $rmuser -Replace  @{info="Created $date. Script v$version"}
 Get-aduser $rmuser | Rename-ADObject -NewName $rmname 
-Enable-RemoteMailbox -Identity $rmuser -RemoteRoutingAddress "$rmuser@dojfbi.mail.onmicrosoft.com" -DomainController $pdc `
+Enable-RemoteMailbox -Identity $rmuser -RemoteRoutingAddress "$rmuser@O365GREEN.mail.onmicrosoft.com" -DomainController $pdc `
                      -ErrorAction SilentlyContinue -WarningAction SilentlyContinue > $null 
     $ii = 1
     Do

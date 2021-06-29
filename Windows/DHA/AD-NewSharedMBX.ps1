@@ -1,7 +1,7 @@
 <#############################################################################################################################################################
 
 Author - Jeremy Zuehsow
-Purpose - FBINET shared mailbox creation.
+Purpose - RED shared mailbox creation.
 
 Change Log:
 v2.1 - Modifications to script per Exchange team request
@@ -259,13 +259,13 @@ Until ($checkFullAccess)
 
 Write-Progress -Activity "Configuring Security Group Permissions....." -PercentComplete 70 
 $sgsmDN = (Get-ADGroup $sgsmName -Server $pdc).DistinguishedName
-try {dsacls "\\$pdc\$sgsmDN" /G "FBI\$user`:WP`;Member" | Out-Null}
+try {dsacls "\\$pdc\$sgsmDN" /G "GREEN\$user`:WP`;Member" | Out-Null}
 catch {Write-Host "Failed to check 'Manger can update membership list' box. Manually check the box in AD to allow the manager to update members." -F Red}
 
 Write-Progress -Activity "Configuring Shared Mailbox Permissions....." -PercentComplete 80
 
 $mbxDN = (Get-ADUser $mbxName -Server $pdc).DistinguishedName
-try {dsacls "\\$pdc\$mbxDN" /G "FBI\$sgsmName`:CA`;Send As" | Out-Null}
+try {dsacls "\\$pdc\$mbxDN" /G "GREEN\$sgsmName`:CA`;Send As" | Out-Null}
 catch {Write-Host "Failed to add 'Send As' permissions to the mailbox. Manually add the permission in the AD object's security tab." -F Red}
 
 Write-Progress -Activity "Configuring Shared Mailbox Permissions....." -PercentComplete 90
@@ -293,10 +293,10 @@ $mbx = Get-ADUser $mbxName -Properties * -Server $pdc
 $sgsm = Get-ADGroup $sgsmName -Properties * -Server $pdc
 $members = (Get-ADGroupMember $sgsmName -Server $pdc).SamAccountName
 
-if ($mbx.DistinguishedName -notlike "*OU=_Organizational Mailboxes,OU=UNET,DC=FBI,DC=GOV") {$ecArray += "Shared Mailbox in wrong OU, "}
+if ($mbx.DistinguishedName -notlike "*OU=_Organizational Mailboxes,OU=GREEN,DC=GREEN,DC=COM") {$ecArray += "Shared Mailbox in wrong OU, "}
 if ($mbx.EmployeeID -ne "N/A (Mailbox)") {$ecArray += "Shared Mailbox EID incorrect, "}
 if ($mbx.Enabled -eq $true) {$ecArray += "Shared Mailbox is enabled, "}
-if ($mbx.mail -ne "$mbxName@fbi.gov") {$ecArray += "Shared mailbox email does not match the name, "}
+if ($mbx.mail -ne "$mbxName@GREEN.com") {$ecArray += "Shared mailbox email does not match the name, "}
 #mbx security group send as
 #exch full access
 #mbx type is shared

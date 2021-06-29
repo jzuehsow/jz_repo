@@ -16,21 +16,21 @@ $log = "[ATTRIBUTE SYNC LOGS]\$date.csv"
 
 # Checks if specified attributes are valid
 $attributes = $attributes.Split(",");$badattrib = $null
-$header = Get-Content -Path $fbinetpath -TotalCount 1
-Foreach ($attribute in $attributes){If ($header -notlike "*$attribute*"){Write-Host "The input file $fbinetpath does not contain an attribute that matches $attribute." -F Red;Pause;Exit}}
+$header = Get-Content -Path $REDPath -TotalCount 1
+Foreach ($attribute in $attributes){If ($header -notlike "*$attribute*"){Write-Host "The input file $REDPath does not contain an attribute that matches $attribute." -F Red;Pause;Exit}}
 Foreach ($attribute in $attributes){Get-ADUser -Filter * -ResultSetSize 1 -Properties $attribute -ErrorVariable badattrib  > $null;If ($badattrib){Pause;Exit}}
 If ($logonly -ne $true -and $logonly -ne $false){Write-Host "The log only variable must be set as True or False." -F Red;Pause;Exit}
 
 If ($logonly -eq $false){Write-Host "The logonly variable is set to false. Continuing will update attributes `"$attributes`" with values from the CSV input file:" -F Yellow
-Write-Host $fbinetpath -F Yellow;Do{$accept = Read-Host "Do you wish to continue? Y/N"}Until ($accept -eq "Y" -or $accept -eq "N")};If ($accept -eq "N"){Pause;Exit}
+Write-Host $REDPath -F Yellow;Do{$accept = Read-Host "Do you wish to continue? Y/N"}Until ($accept -eq "Y" -or $accept -eq "N")};If ($accept -eq "N"){Pause;Exit}
 
 # Function to log changes
 Function changelog {
-$hash =[pscustomobject]@{LogOnly = $logonly;SamAccountName = $rmuser;EmployeeID = $rmeid;Attribute = $attribute;PreChange = $unetvalue;PostChange = $fbinetvalue}
+$hash =[pscustomobject]@{LogOnly = $logonly;SamAccountName = $rmuser;EmployeeID = $rmeid;Attribute = $attribute;PreChange = $GREENValue;PostChange = $REDValue}
 $hash | export-csv $log -NoTypeInformation -Append;$hash = @{}
 }
 
-# Imports FBINET CSV 
+# Imports RED CSV 
 Write-Host "Importing and filtering CSV. This can take a while..." -F Green
 $RED = Import-Csv $REDpath;$RED = $RED | Where {$_.EmployeeID -like "?????????" -or $_.EmployeeNumber -like "?????????" -and $_.DistinguishedName -notlike "*archive*"}
 $i = 1;$csvcount = $RED.count;Clear-Host
@@ -46,9 +46,9 @@ Write-Progress -Activity " $percent percent complete" -PercentComplete $percent;
     {
         Foreach ($attribute in $attributes)
         {
-        $unetvalue = $null;$REDvalue = $null
-        $unetvalue = (Get-ADUser $rmuser -Properties $attribute).$attribute
-        $REDvalue = "`$line." +  $attribute;$fbinetvalue = Invoke-Expression $fbinetvalue
+        $GREENValue = $null;$REDvalue = $null
+        $GREENValue = (Get-ADUser $rmuser -Properties $attribute).$attribute
+        $REDvalue = "`$line." +  $attribute;$REDValue = Invoke-Expression $REDValue
             
             If ($attribute -eq "DisplayName")
             {
@@ -59,8 +59,8 @@ Write-Progress -Activity " $percent percent complete" -PercentComplete $percent;
                 $REDvalue = $REDvalue -replace "ii","II" -replace "iii","III" -replace "iv","IV"}
             }
             $command1 = "Set-ADUser $rmuser -Clear $attribute";$command2 = "Set-ADUser $rmuser -$attribute `"$REDvalue`""            
-            If (!$REDvalue -and $unetvalue){If($logonly -eq $false){Invoke-Expression $command1};changelog}
-            ElseIf ($unetvalue -ne $REDvalue -and $REDvalue){If($logonly -eq $false){Invoke-Expression $command2};changelog}
+            If (!$REDvalue -and $GREENValue){If($logonly -eq $false){Invoke-Expression $command1};changelog}
+            ElseIf ($GREENValue -ne $REDvalue -and $REDvalue){If($logonly -eq $false){Invoke-Expression $command2};changelog}
         }
     }
 }
