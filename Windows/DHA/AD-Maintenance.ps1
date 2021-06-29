@@ -1,19 +1,13 @@
+<###############################################################################################################################
 
-
-
-
-
-################################################################################################################################
-<# 
-
-Created by Jeremy Zuehsow, 01/18/2018
+Created by Jeremy Zuehsow, IMSU, 01/18/2018
 
 The purpose of this script is to perform ongoing Active Directory maintenance actions.
 
 Any and all changes must be run by Jeremy first, do not make changes to this script without approval and review.
 
 v1.0 - Combined audit scripts for Schema and Enterprise Admins and Users and Computers containers. -Jeremy
-v2.0 - Added function to remove users in Disabled OU from all groups except Domain Users. -Jeremy
+v2.0 - Added function to remove users in SAR Disabled OU from all groups except Domain Users. -Jeremy
 v3.0 - Added function to archive old log files. -Jeremy
 v3.1 - Removed disable user/computer and remove users from groups from Audit_Containers function.
        Corrected variable order.
@@ -27,33 +21,28 @@ v5.0 - Added Audit_Active_Admin_Accounts, Audit_Admin_Attributes, Audit_Phone_Nu
 v5.1 - Added function to archive old logs when a new one is created. -Jeremy
 v5.2 - Improved efficiency of all functions. -Jeremy
 v5.3 - Consolidate all notifications to single email. -Jeremy
+v5.4 - Update some script syntax and function formulas
 
-#>
-################################################################################################################################ 
+###############################################################################################################################>
 
-Import-Module ActiveDirectory
-Remove-Variable * -ErrorAction SilentlyContinue
-$ErrorActionPreference = 'SilentlyContinue'
-$year = Get-Date -Format yyyy
-$month = (Get-Date -Format MM)+" "+(Get-Date -Format MMMM)
-$day = Get-Date -Format ddd
-$date = Get-Date -Format yyyy-MM-dd
-$logServer = "HQS6-ULOGS-401"
+<#
 
-$path = "[]"
-$logPath = "$path\Logs"
-$GREENOU = "[]"
-$usersOU = "[]"
-$groupsOU = "[]"
-$contactsOU = "[]"
+#ADDTIONAL VARIABLES
+
+$path = 
+$logPath = 
+$GREENOU = 
+$usersOU = 
+$groupsOU = 
+$contactsOU = 
 
 $adminGroups = 'Schema Admins','Enterprise Admins'
 $containers = 'Computers','Users'
-$exemptAdmins = @((Get-ADGroupMember '[ADMIN GROUP]').SamAccountName,(Get-ADGroupMember '[ADMIN GROUP]').SamAccountName) | Sort
+$exemptAdmins = @((Get-ADGroupMember '[]').SamAccountName,(Get-ADGroupMember '[]').SamAccountName) | Sort
 $exemptObjList = @(Import-Csv "$path\Config\ExemptObjects.csv" | Sort).DN
 $exemptGroups = @(Get-ADGroupMember 'Domain Admins')
-$ouSARDisabled = "[]"
-$ouAdminDisabled = "[]"
+$ouSARDisabled = 
+$ouAdminDisabled = 
 $ouDisabled = @($ouSARDisabled,$ouAdminDisabled)
 $defaultGroup = Get-ADGroup "Domain Users"
 $defaultGroupID = ($defaultGroup.SID).Value.Substring(($defaultGroup.SID).Value.LastIndexOf("-")+1)
@@ -63,80 +52,96 @@ $bodyArray = @()
 $auditTime = (Get-Date).AddDays(-7)
 $admins = Get-ADGroupMember 'Administrators' -Recursive | Get-ADUser -Properties * | Sort
 
-function Get_Time {$Script:time = Get-Date -Format HH:mm}
-function Create_Log_File
+#>
+
+
+Set-Location $PSScriptRoot
+.".\Config\Common.ps1"
+
+Start_Script
+
+$logServer = "[LOG SERVER]"
+$archiveLogPath = "[ARCHIVE LOG PATH]"
+
+
+Function New_LogFile
 {
     $Script:logFile = "$logPath\$month - $functionName.log"
-    $tries = 0
-    while (!(Test-Path $logFile) -and $tries -le 5)
+    
+    $i = 0
+    While (!(Test-Path $logFile))
     {
-        Start-Sleep $tries; $tries++
         New-Item $logFile -ItemType file | Out-Null
+        $i++; If ($i -ge 5) {Pause; Exit}
     }
 }
-function Create_Recovery_File
+
+Function New_RecoveryFile
 {
     $Script:recoveryFile = "$logPath\Recovery\$date - $functionName Recovery.csv"
-    $tries = 0
-    while (!(Test-Path $recoveryFile) -and $tries -le 5)
+
+    $i = 0
+    While (!(Test-Path $recoveryFile))
     {
-        Start-Sleep $tries; $tries++
         New-Item $recoveryFile -ItemType file | Out-Null
         $recoveryHeader | Add-Content $recoveryFile
+        $i++; If ($i -ge 5) {Pause; Exit}
     }
 }
-function Archive_Logs
+
+Function Archive_Logs
 {
-    $logs = Get-ChildItem $logPath | ?{$_.Name -like "*$functionName*"} | Sort LastWriteTime
-    $logCount = $logs.Count
-    foreach ($log in $logs)
+    $logs = Get-ChildItem $logPath -Recurse | ? {$_.Name -like "*$functionName*"} | Sort LastWriteTime
+    $logCount = $logs.count
+
+    ForEach ($log in $logs)
     {
-        if ($logCount -gt 1)
+        If ($logCount -gt 1)
         {
             $writeYear = ($log.LastWriteTime).year
-            $destPath = "$logPath\Maintenance\$writeYear"
-            $tries = 0
-            if (!(Test-Path "$destPath\$log") -and $tries -le 5)
+            $destPath = "$logPath\$functionName\$writeYear"
+
+            $i = 0
+            If (!(Test-Path "$destPath\$log"))
             {
-                Start-Sleep $tries
                 Move-Item -Path "$logPath\$log" -Destination $destPath
-                $tries++
+                $i++; If ($i -ge 5) {Pause; Exit}
             }
-            else
+            Else
             {
                 $i = 0
                 $dupeName = $log
-                while (Test-Path "$destPath\$dupeName") {$i += 1; $dupeName = $log.basename+$i+$log.extension}
+                While (Test-Path "$destPath\$dupeName") {$i++; $dupeName = $log.basename+$i+$log.extension}
                 Move-Item "$logPath\$log" -Destination "$destPath\$dupeName"
             }
             $logCount--
         }
     }
 }
-function Remove_From_Group
+
+Function Remove_GroupMember
 {
-    $tries = 0
-    if ($exemptGroups -contains $groupName) {break}
-    while ((Get-ADPrincipalGroupMembership $sam).name -contains $groupName -and $tries -lt 5)
+    If ($exemptGroups -contains $groupName) {break}
+    
+    $i = 0
+    While ((Get-ADPrincipalGroupMembership $sam).Name -contains $groupName)
     {
-        Start-Sleep $tries; $tries++
         Remove-ADPrincipalGroupMembership $sam -MemberOf $groupName -Confirm:$false | Out-Null
+        $i++; If ($i -ge 5) {break}
     }
-    if (Get-ADPrincipalGroupMembership $sam -contains $groupName) {Get_Time; $Script:line = "$date $sam was NOT REMOVED from $groupName at $time."}
-    else {Get_Time; $Script:line = "$date $sam was removed from $groupName at $time."}
+    
+    If (Get-ADPrincipalGroupMembership $sam -contains $groupName) {$status = " NOT"}
+    Get_Time; $Script:line = "$date $sam was$status removed from $groupName at $time."}
 }
-function Send_Mail
-{
-    $MBX = "[]"
-    $subject = 'AD Maintenance Notification'
-    $smtp = "[]"
-    $link = "<a href='$logPath'>HERE</a>"
-    $bodyArray = $bodyArray -replace "$date ", ""
-    $line1 = @("Active Directory maintenance actions initiated at $startTime and completed at $endTime.","`n","`n")
-    $line2 = @("`n","All log files are available $link")
-    $body = &{$OFS="<br/>";[string]($line1+$bodyArray+$line2)}
-    Send-MailMessage -From $MBX -To $MBX -Subject $subject -BodyAsHtml $body -SmtpServer $smtp
-}
+
+
+
+
+#SPLIT REMAINING FUNCTIONS INTO SEPARATE SCRIPTS AND CALL INDIVIDUALLY
+
+
+
+
 function Audit_Restricted_Groups
 {   
     $functionName = ($MyInvocation.MyCommand).Name -replace "_"," "
@@ -223,7 +228,7 @@ function Audit_Containers
 
     foreach ($container in $containers)
     {
-        $containerDN = "CN=$container,[DOMAIN FQ]"
+        $containerDN = "CN=$container,[FQDN DOMAIN]"
         $objects = Get-ADObject -Filter * -Properties * -SearchBase $containerDN | Sort
         
         foreach ($object in $objects)
@@ -477,9 +482,9 @@ function Audit_Phone_Numbers
     if (($k = $i+$j) -gt 0)
     {
         if (!($j)) {$j = 'No'}
-        Get_Time; $logArray += "$date In the past 7 days, there were $k OCONUS phone numbers formatted incorrectly at $time. $j number formats were corrected."
+        Get_Time; $logArray += "$date In the past 7 days, there were $k (Non-Legat) phone numbers formatted incorrectly at $time. $j number formats were corrected."
     }
-    else {Get_Time; $logArray += "$date In the past 7 days, no OCONUS phone numbers were formatted incorrectly at $time."}
+    else {Get_Time; $logArray += "$date In the past 7 days, no (Non-Legat) phone numbers were formatted incorrectly at $time."}
     ($logArray += "`n") | Add-Content $logFile
     $Script:bodyArray += $logArray
 }
@@ -492,4 +497,27 @@ Audit_Admin_Attributes
 #Audit_SAR_Disabled_Accounts
 Audit_Phone_Numbers
 $endTime = Get-Date -Format HH:mm
+
+
+
+
+
+
+<#
+THIS DOES NOT NEED TO BE A FUNCTION
+
+function Send_Mail
+{
+    $MBX = 
+    $subject = 
+    $smtp = 
+    $link = "<a href='$logPath'>HERE</a>"
+    $bodyArray = $bodyArray -replace "$date ", ""
+    $line1 = @("Active Directory maintenance actions initiated at $startTime and completed at $endTime.","`n","`n")
+    $line2 = @("`n","All log files are available $link")
+    $body = &{$OFS="<br/>";[string]($line1+$bodyArray+$line2)}
+    Send-MailMessage -From $MBX -To $MBX -Subject $subject -BodyAsHtml $body -SmtpServer $smtp
+}
+
 Send_Mail
+#>
