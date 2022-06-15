@@ -1,0 +1,62 @@
+- name: Install packages for c2s access
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "awscli"
+    - "jq"
+
+- name: Prepare c2s install dir
+  ansible.builtin.file:
+    path: "{{ c2s_install_dir }}""
+    owner: "user"
+    group: "user"
+    state: directory
+
+- name: Copy cert files
+  become: no
+  ansible.builtin.copy:
+    src: "{{ item }}""
+    dest: "{{ c2s_install_dir }}/""
+  loop:
+    - "c2s_cert"
+    - "c2s_key"
+
+- name: Template .curlrc
+  become: no
+  ansible.builtin.template:
+    src: ".curlrc"
+    dest: "~/.curlrc"
+
+- name: Template login scripts for cron
+  become: no
+  ansible.builtin.template:
+    owner: "user"
+    mode: "0766"
+    src: "caplogin.sh"
+    dest: "{{ c2s_install_dir }}"
+
+- name: Template ca_bundle.crt
+  become: no
+  ansible.builtin.template:
+    src: "ca_bundle.crt"
+    dest: "{{ c2s_install_dir }}"
+
+- name: Template .aws/config file
+  become: no
+  ansible.builtin.template:
+    src: "config"
+    dest: "{{ aws_config_dir }}"
+
+- name: Update creds
+  become: no
+  ansible.builtin.shell:
+    cmd: "Source {{ c2s_install_dir }}/caplogin.sh"
+
+- name: Add cron job to update creds
+  become: no
+  ansible.builtin.cron:
+    name: "refresh_c2s_keys"
+    user: [USER]
+    job: "source {{ c2s_install_dir }}/caplogin.sh"
+    minute: "15,45"

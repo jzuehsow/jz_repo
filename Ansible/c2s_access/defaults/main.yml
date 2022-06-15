@@ -1,0 +1,8 @@
+c2s_install_dir: "/opt/c2s"
+c2s_creds_url: "AWS_URL"
+c2s_creds_response_json: {{ c2s_install_dir }}/credentials.json
+c2s_cert: ""
+c2s_key: ""
+aws_ca_bundle: ""
+aws_config_dir: "/home/centos/.aws"
+config: ""
