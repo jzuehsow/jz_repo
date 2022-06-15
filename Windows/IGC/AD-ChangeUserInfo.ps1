@@ -10,7 +10,7 @@ ForEach ($user in $userList)
     $rmName = $user.name
     $rmTitle = $user.title
     $rmDepartment = $user.Department
-    $rmCompany = [COMPANY NAME]
+    $rmCompany = [COMPANY_NAME]
     $rmManager = (Get-ADUser $user.Manager).DistinguishedName
     $rmOffice = $user.office
     $rmOfficePhone = $user.officePhone
@@ -25,7 +25,7 @@ ForEach ($user in $userList)
     $rmSAM = $userData.samAccountName
     $rmDescription = $city + '-' + $title
 
-    Set-ADUser $sam -Title $rmTitle -Department $rmDepartment -Company $rmCompany -Manager $rmManager -Office $rmOffice `
+    Set-ADUser $rmSam -Title $rmTitle -Department $rmDepartment -Company $rmCompany -Manager $rmManager -Office $rmOffice `
     -OfficePhone $rmOfficePhone -MobilePhone $rmCellPhone -Description $rmDescription -StreetAddress $rmStreet -POBox $rmPOBox -State $rmState -PostalCode $rmZip
     Clear-Variable rm* -Force
 }

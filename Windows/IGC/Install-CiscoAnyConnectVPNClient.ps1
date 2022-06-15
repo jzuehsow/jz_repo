@@ -4,9 +4,9 @@
 
 Import-Module ActiveDirectory
 $ErrorActionPreference = 'SilentlyContinue'
-$searchBase = [OU DISTINGUISHED NAME]
+$searchBase = [OU_DISTINGUISHED_NAME]
 $computers = Get-ADComputer -Filter * -SearchBase $searchBase
-$filePath = [PATH TO MSI FILE]
+$filePath = [MSI_FILE_PATH]
 $currentVersion = '3.1.12020'
 $registryPath = 'HKLM:\Software\Classes\Installer\Products\51A61408B41252F40A52DEE67865132F'
 

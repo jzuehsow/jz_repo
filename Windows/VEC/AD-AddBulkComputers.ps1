@@ -19,14 +19,10 @@ $csv = '.\NewComputers.csv'
 computersOU = 'OU=COMPUTERS,OU=HELPDESK,OU=SITE,OU=REGION,DC=MICROSOFT,DC=CONTOSO,DC=COM'
 $vlan = '8021x_VLAN'  #OPTIONAL
 
-If (!(Test-Path $csv))
+While (!(Test-Path $csv))
 {
-    Do
-    {
-        Write-Host "CSV Not Found`n" -F Red
-        $csv = Read-Host "Enter CSV File Path"
-    }
-    Until (Test-Path $csv)
+    Write-Host "CSV Not Found`n" -F Red
+    $csv = Read-Host "Enter CSV File Path"
 }
 
 $newComputers = Import-Csv -Path $csv

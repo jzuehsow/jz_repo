@@ -27,7 +27,7 @@ Function Write_Banner
 {
   $title = ($Script:MyInvocation.MyCommand).Name -replace ".ps1", "$version"
   $l = (120-$title.Length)/16
-  $seperator = 1..80 | % {Write-Host '-' -NoNewline} #THIS IS NOT WORKING?????
+  $seperator = 1..80 | ForEach-Object {Write-Host '-' -NoNewline} #THIS IS NOT WORKING?????
   $seperator = '--------------------------------------------------------------------------------'
   Clear-Host
   Write-Host "`n$seperator`n$seperator`n`n" -F Cyan

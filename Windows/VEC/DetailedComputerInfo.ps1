@@ -7,7 +7,7 @@ Import-Module ActiveDirectory
 Clear-Variable -Name * -Force
 $ErrorActionPreference = 'SilentlyContinue'
 $domain = Get-ADDomain
-$searchBase = 'OU=Computers,OU=Tysons Corner,DC=IGEN,DC=LOCAL'
+$searchBase = 'OU=Computers,OU=SITE,DC=contoso,DC=com'
 $date = Get-Date -Format yyyyMMdd
 $outFile = '\\IGC-TL-ZUEHSOW\C$\Users\jeremy.zuehsow\Downloads\SCRIPTS\Detailed Computer Information Logs\Detailed Computer Information.xlsx'
 Clear-Host

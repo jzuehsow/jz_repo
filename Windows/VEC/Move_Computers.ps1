@@ -1,5 +1,5 @@
 
-#This script needs major rework
+#This script needs rework
 
 
 #Import CSV and check whether a machine is online and uses PSTools psshutdown.exe to shutdown machine. Computer's VLAN is changed to a new VLAN and moved to new OU.
@@ -12,50 +12,45 @@
 #begin transfer - progress bar, status list
 #pause, repeat until complete or 5 attempts
 
+Import-Module ActiveDirectory
+$ErrorActionPreference = "SilentlyContinue"
+$compList = Import-Csv .\Comps.csv
+$date = Get-Date -Format yyyyMMdd-HHmm
+$oldOU = "OU=Computers,OU=Helpdesk,OU=Site,OU=Region,DC=contoso,DC=com"
+$newOU = "OU=Sub_Comp_OU,OU=Computers,OU=Helpdesk,OU=Site,OU=Region,DC=contoso,DC=com"
+$oldVLAN = "OLD_VLAN"
+$newVLAN = "NEW_VLAN"
 
-
-Import-Module ActiveDirectory
-$ErrorActionPreference = "SilentlyContinue"
-$compList = Import-Csv .\Comps.csv
-$date = Get-Date -Format yyyyMMdd-HHmm
-$OldOU = "OU=Computers,OU=[HA OU],OU=[SITE],OU=[REGION],DC=contoso,DC=com"
-$NewOU = "OU=[SUB OU],OU=Computers,OU=[HA OU],OU=[REGION],DC=contoso,DC=com"
-$OldVLAN = "[OLD VLAN]"
-$NewVLAN = "[NEW VLAN]"
-
-
-foreach($item in $compList)
+ForEach ($comp in $compList)
 {
-    $NewName = $item.NewName
-    $OnlineOutput = "$NewName Online, Shut Down - $date"
-    $OfflineOutput = "$NewName Offline - $date"
-    $Online = Test-Connection $NewName -Count 1 -Quiet
- 
-    if($Online -eq $true)
-    {
-        .\psshutdown.exe -s -t 0 -f \\$NewName
-        Write-Host $OnlineOutput
-        $OnlineOutput | Out-File -Encoding unicode -FilePath ".\MoveLog - $date.txt" -Append
-    }
-    else
-    {
-        Write-Host $OfflineOutput
-        $OfflineOutput | Out-File -Encoding unicode -FilePath ".\MoveLog - $date.txt" -Append
-    }
+    $rmNewName = $comp.NewName
+
+    if (Test-Connection $rmNewName -Count 1 -Quiet)
+    {
+        Do 
+        {
+            .\psshutdown.exe -s -t 0 -f \\$rmNewName
+            Start-Sleep 60
+        }
+        Until (!(Test-Connection $rmNewName -Count 1 -Quiet))
+        $rmStatus = "$newName Online, Shutdown - $date"
+    }
+    else {$rmStatus = "$newName Offline - $date"}
+    Write-Host $rmStatus
+    $rm$status | Out-File -Encoding unicode -FilePath ".\MoveLog - $date.txt" -Append
+
+    $rmSam = (Get-ADComputer -Identity $rmNewName).SamAccountName
+
+    #NEED REVIEW OF -ne/-contains in UNTIL; REVIEW PATH OUTPUT
+    Do {Remove ADGroupMember $oldVLAN - Members $rmSam -Confirm:$false}
+    Until (Get-ADPrincipalGroupMembership $oldVLAN -ne $rmSam)
+    Do {Add-ADGroupMember $newVLAN -Members $rmSam -Confirm:$false}
+    Until (Get-ADPrincipalGroupMembership $newVLAN -contains $rmSam)
+    Do {Get-ADComputer -Identity $rmSam | Move-ADObject -TargetPath $newOU}
+    Until (Get-ADComputer -Identity $rmSam | ($_.PATH -eq "$newOU\$rmSam"))
+
+    $rmMVStatus = "$rmNewName moved to [SITE] OU - $date"
+
+    Write-Host $rmMVStatus
+    $rmMVStatus | Out-File -Encoding unicode -FilePath ".\MoveLog - $date.txt" -Append
 }
- 
-foreach($item in $compList)
-{
-    $NewName = $item.NewName
-    $SAMAccountName = (Get-ADComputer -Identity $NewName).SAMAccountName
-    $OnlineOutput = "$NewName moved to FNTY OU - $date"
-   
-    Remove-ADGroupMember $OldVLAN -Members $SAMAccountName -Confirm:$false
-    Add-ADGroupMember $NewVLAN -Members $SAMAccountName -Confirm:$false
-    Get-ADComputer -Identity $NewName | Move-ADObject -TargetPath $NewOU
-    Write-Host $OnlineOutput
-    $OnlineOutput | Out-File -Encoding unicode -FilePath ".\MoveLog - $date.txt" -Append
-}
-
-
-

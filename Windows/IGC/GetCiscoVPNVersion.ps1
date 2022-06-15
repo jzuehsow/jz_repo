@@ -5,7 +5,6 @@ Import-Module ActiveDirectory
 $ErrorActionPreference = 'SilentlyContinue'
 $searchBase = 'OU=Computers,OU=Tysons Corner,DC=IGEN,DC=LOCAL'
 $computers = Get-ADComputer -Filter * -SearchBase $searchBase
-$date = Get-Date -Format yyyyMMMdd-HHmm
 Clear-Content
 
 ForEach ($cpuName in $computers.Name)
