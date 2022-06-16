@@ -1,0 +1,38 @@
+- name: Make hydra dir
+  ansible.builtin.file:
+    path: "{{ nfs_shared_mount_dir }}"
+    state: directory
+
+- name: Install nfs package
+  ansible.builtin.package:
+    name:
+      - nfs-utils
+    state: present
+
+- name: Set up hydra nfs export
+  ansible.builtin.lineinfile:
+    path: /etc/exports
+    line: "{{ nfs_shared_mount_dir }} *(rw,no_root_squash, no_acl, insecure)"
+
+- name: Create filesystem on volume mount
+  ansible.builtin.shell:
+    cmd: mkfs -t ext4 {{ nfs_volume_src }}
+  ignore_errors: true
+
+- name: Mount hydra folder
+  ansible.builtin.mount:
+    path: "{{ nfs_shared_mount_dir }}"
+    src: "{{ nfs_volume_src }}"
+    fstype: ext4
+    opts: "rw,relatime,seclabel,data=ordered"
+    state: mounted
+    boot: yes
+
+- name: Start services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop:
+    - nfs
+    - rpcbind
