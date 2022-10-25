@@ -14,6 +14,7 @@ Set-Location $PSScriptRoot
 $version = '1.1'
 
 Start_Script
+Write_Banner
 
 $csv = '.\NewComputers.csv'
 computersOU = 'OU=COMPUTERS,OU=HELPDESK,OU=SITE,OU=REGION,DC=MICROSOFT,DC=CONTOSO,DC=COM'
