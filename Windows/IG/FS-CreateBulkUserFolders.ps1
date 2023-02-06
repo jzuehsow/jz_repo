@@ -1,12 +1,25 @@
+<###############################################################################################################################
+
+Created by Jeremy Zuehsow, 09/15/2017
+
+The purpose of this script is to create in bulk directories for users on a share.
+
+###############################################################################################################################>
 
 
+."[PATH]]\Config\Common.ps1"
+$version = '1.0'
+
+Start_Script
+Write_Banner
 
 Import-Module ActiveDirectory
-$ou1 = [OU_DISTINGUISHED_NAME]
-$ou2 = ""
-$ou3 = ""
-$ou4 = ""
-$ous = (Get-Variable ou?).Name
+$ous =@(
+    '[OU=OU1,DC=CONTOSO,DC=COM]'
+    '[OU=OU2,DC=CONTOSO,DC=COM]'
+    '[OU=OU3,DC=CONTOSO,DC=COM]'
+    '[OU=OU4,DC=CONTOSO,DC=COM]'
+)
 $folderPath = [Folder_Path]
 
 ForEach ($ou in $ous)
@@ -24,3 +37,5 @@ ForEach ($ou in $ous)
         icacls $newFolder /grant:r ($sam + ':(OI)(CI)M')
     }
 }
+
+Stop_Script

@@ -1,10 +1,4 @@
-
-
-
-
-
-################################################################################################################################
-<# 
+<###############################################################################################################################
 
 Created by Jeremy Zuehsow, 01/18/2018
 
@@ -28,8 +22,7 @@ v5.1 - Added function to archive old logs when a new one is created. -Jeremy
 v5.2 - Improved efficiency of all functions. -Jeremy
 v5.3 - Consolidate all notifications to single email. -Jeremy
 
-#>
-################################################################################################################################ 
+###############################################################################################################################>
 
 Import-Module ActiveDirectory
 Remove-Variable * -ErrorAction SilentlyContinue
@@ -38,7 +31,7 @@ $year = Get-Date -Format yyyy
 $month = (Get-Date -Format MM)+" "+(Get-Date -Format MMMM)
 $day = Get-Date -Format ddd
 $date = Get-Date -Format yyyy-MM-dd
-$logServer = "HQS6-ULOGS-401"
+$logServer = <LOG SERVER>
 
 $path = "[]"
 $logPath = "$path\Logs"

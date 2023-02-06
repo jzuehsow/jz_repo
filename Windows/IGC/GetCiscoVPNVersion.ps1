@@ -1,11 +1,22 @@
+<###############################################################################################################################
+
+Created by Jeremy Zuehsow, 10/15/2016
+
+The purpose of this script is to get the installed version of Cisco AnyConnect VPN Client.
+
+###############################################################################################################################>
 
 
+."[PATH]]\Config\Common.ps1"
+$version = '1.0'
+
+Start_Script
+Write_Banner
 
 Import-Module ActiveDirectory
 $ErrorActionPreference = 'SilentlyContinue'
 $searchBase = 'OU=Computers,OU=Tysons Corner,DC=IGEN,DC=LOCAL'
 $computers = Get-ADComputer -Filter * -SearchBase $searchBase
-Clear-Content
 
 ForEach ($cpuName in $computers.Name)
 {
@@ -22,7 +33,8 @@ ForEach ($cpuName in $computers.Name)
         $version = $regKey.GetValue("DisplayVersion")
         Write-Host $cpuName $version <# | OutFile -Encoding Unicode -FilePath ".\CiscoAnyConnectVersionLog.txt" -Append#>
     }
-    else {
+    else
+    {
         Write-Host "$cpuName Offline"
         #"$cpuName Offline" | Out-File -Encoding Unicode -FilePath ".\CiscoAnyConnectVersionLog.txt" -Append
     }

@@ -1,6 +1,17 @@
+<###############################################################################################################################
+
+Created by Jeremy Zuehsow, 10/15/2016
+
+The purpose of this script is to install Cisco AnyConnect VPN Client.
+
+###############################################################################################################################>
 
 
+."[PATH]]\Config\Common.ps1"
+$version = '1.0'
 
+Start_Script
+Write_Banner
 
 Import-Module ActiveDirectory
 $ErrorActionPreference = 'SilentlyContinue'
@@ -38,13 +49,8 @@ ForEach ($computer in $computers)
             $vpnVersion = $regKey.GetValue("DisplayVersion")
             Write-Host $cpuName "Installed v$vpnVersion."
             Remove-Item $installPath -Force -Recurse -Confirm:$false
-            
-        
         }
         Else {Write-Host "$cpuName already installed current version."}
-
-
-    
     }
     Else {Write-Host "$cpuName Offline"}
 }

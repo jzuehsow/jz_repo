@@ -1,4 +1,17 @@
+<###############################################################################################################################
 
+Created by Jeremy Zuehsow, 10/15/2016
+
+The purpose of this script is to import user data from a spreadsheet and update in AD.
+
+###############################################################################################################################>
+
+
+."[PATH]]\Config\Common.ps1"
+$version = '1.0'
+
+Start_Script
+Write_Banner
 
 Import-Module ActiveDirectory
 Get-Variable -Exclude PWD,*Preference | Remove-Variable -ErrorAction 0
@@ -25,7 +38,9 @@ ForEach ($user in $userList)
     $rmSAM = $userData.samAccountName
     $rmDescription = $city + '-' + $title
 
-    Set-ADUser $rmSam -Title $rmTitle -Department $rmDepartment -Company $rmCompany -Manager $rmManager -Office $rmOffice `
-    -OfficePhone $rmOfficePhone -MobilePhone $rmCellPhone -Description $rmDescription -StreetAddress $rmStreet -POBox $rmPOBox -State $rmState -PostalCode $rmZip
+    Set-ADUser $rmSam -Name $rmName -Title $rmTitle -Department $rmDepartment -Company $rmCompany -Manager $rmManager -Office $rmOffice `
+    -OfficePhone $rmOfficePhone -MobilePhone $rmCellPhone -Description $rmDescription -StreetAddress $rmStreet -POBox $rmPOBox -State $rmState -City $rmCity -Country $rmCountry -PostalCode $rmZip
     Clear-Variable rm* -Force
 }
+
+Stop_Script

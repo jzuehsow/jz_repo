@@ -104,32 +104,29 @@ Pause
 ## Add member to group
 #########################################################################################################################################################
 
-If ($rmselection -eq "2")
+If ($rmSelection -eq "2")
 {
-    ""    
     Do
     {
-    $rmuser = Read-Host "Enter the user name being added to the group or press c to cancel"        
-        If (!($(try {(get-aduser $rmuser)} catch {$null}))){Write-Host "Invalid username." -F Red}
+        $rmuser = Read-Host "Enter the user name being added to the group or press c to cancel"        
+        If (!($(try {(Get-ADuser $rmUser)} catch {$null}))){Write-Host "Invalid username." -F Red}
     }
-    Until ($(try {(get-aduser $rmuser)} catch {$null}) -or $rmuser -eq "c")
+    Until ($(try {(Get-ADuser $rmUser)} catch {$null}) -or $rmUser -eq "c")
 
-        If ($rmuser -ne "c")
+    If ($rmUser -ne "c")
+    {
+        Add-ADGroupMember -Identity $groupname -Members $rmUser
+            
+        If (Get-ADGroupMember $groupname | Where {$_.SamAccountName -eq $rmUser})
         {
-        Add-ADGroupMember -Identity $groupname -Members $rmuser
-    
-            ""
-            If (Get-ADGroupMember $groupname | Where {$_.SamAccountName -eq $rmuser})
-            {
-            Write-Host "$rmuser added to group." -F Green
-            }
-            Else
-            {
-            Write-Host "Unable to add user $rmuser to group. Pleae try again." -F Red
-            }
-            ""
-        Pause
+            Write-Host "$rmUser added to group." -F Green
         }
+        Else
+        {
+            Write-Host "Unable to add user $rmUser to group. Pleae try again." -F Red
+        }
+        Pause
+    }
 }
 
 #########################################################################################################################################################
