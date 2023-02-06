@@ -36,6 +36,7 @@ $serversSecondary = @(
 '[ADFSSERVER42]'
 )
 $serversCount = $serversPrimary.Count + $serversSecondary.Count
+
 ForEach ($server in $serversPrimary)
 {
 	New-Variable ip$server –Value ((Test-Connection $server –Count 1).IPV4Address) -Force

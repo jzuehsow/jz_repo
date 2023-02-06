@@ -6,8 +6,6 @@ Purpose:     This script notifies and sends half the password to the user and Se
 
 Created:     07/01/2019
 
-Change Log: 
-
 #############################################################################################################################################################>
 
 
@@ -15,6 +13,7 @@ Change Log:
 $version = '2.0'
 
 Start_Script
+Write_Banner
 
 $attach = "\\[PATH]Input\NameChange_Communication-Final.docx"
 $adSMBX = '[ALERT MAILBOX]'

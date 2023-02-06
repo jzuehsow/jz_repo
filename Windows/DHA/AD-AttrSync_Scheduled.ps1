@@ -12,12 +12,7 @@ Set-Location $PSScriptRoot
 $version = '1.0'
 
 Start_Script
-
-
-<###############################################################################################################################
-
-###############################################################################################################################>
-
+Write_Banner
 
 # Separate attributes to sync with a comma Example: "Department,Title,Office"
 $attributes = "Department"

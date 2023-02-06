@@ -1,6 +1,18 @@
+<#############################################################################################################################################################
+
+Author:      Jeremy Zuehsow
+Purpose:     This script monitors the CPU and RAM usage on DNS servers.
 
 
+Created:     10/13/2017
 
+#############################################################################################################################################################>
+
+."[PATH]]\Config\Common.ps1"
+$version = '1.2'
+
+Start_Script
+Write_Banner
 
 $ErrorActionPreference = 'SilentlyContinue'
 $logPath = [LOGPATH]
@@ -9,8 +21,6 @@ $crit = "{0:P0}" -f (.9)
 $critMax = "{0:P0}" -f (1)
 $alertCap = '10'
 $shellHeader = Clear-Host; "Domain Controll`tProcessor Load`tMemory Load`tAlert Count"
-$
-$
 $searchBase = [DC OU]
 $servers = (Get-ADComputer -Filter * -SearchBase $searchBase).Name | Sort
 $serverArray @()
