@@ -21,6 +21,9 @@ Function Start_Script
   $Script:smtp = "[SMTP.DOMAIN.COM]" #PULL THIS FROM THE INI FILE
   $Script:ErrorActionPreference = 'SilentlyContinue'
   $Script:WarningPreference = 'SilentlyContinue'
+
+  if (!$DefaultVars) {$Global:DefaultVars = (Get-Variable).Name}
+  Get-Variable -Exclude $DefaultVars | Remove-Variable -ErrorAction 0
 }
 
 Function Write_Banner

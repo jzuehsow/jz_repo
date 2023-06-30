@@ -2,7 +2,7 @@
 
 Created by Jeremy Zuehsow, 10/15/2016
 
-The purpose of this script is to import user data from a spreadsheet and update in AD.
+Import user data from a spreadsheet and update in AD.
 
 ###############################################################################################################################>
 
@@ -14,7 +14,7 @@ Start_Script
 Write_Banner
 
 Import-Module ActiveDirectory
-Get-Variable -Exclude PWD,*Preference | Remove-Variable -ErrorAction 0
+#Get-Variable -Exclude PWD,*Preference | Remove-Variable -ErrorAction 0 #Superseded by Start_Script? Testing Required
 $ErrorActionPreference = 'SilentlyContinue'
 $userList = Import-Csv '.\Input\users.csv'
 
