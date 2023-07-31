@@ -8,32 +8,33 @@ Created:     07/01/2019
 
 Change Log: v1.1 Added functions for monitoring servers and checking load balancers.
             v1.2 Modified monitoring function to manually check a certain number of times
+	    v1.3 Check_LB function modified for efficiency; changed some formatting
 
 #############################################################################################################################################################>
 
 
 ."[PATH]]\Config\Common.ps1"
-$version = '1.2'
+$version = '1.3'
 
 Start_Script
 
 $adfsTestURL = "[ADFS URL]"
 $adfsF5Primary = "[LOAD BALANCER WEB CONSOLE 1]"
-$adfsF5Secondary = "[Load BALANCER WEB CONSOLE 2]"
+$adfsF5Secondary = "[LOAD BALANCER WEB CONSOLE 2]"
 $svc = 'adfssrv'
 $svcDisp = 'Active Directory Federation Services'
 
 $serversPrimary = @(
-'[ADFSSERVER1]',
-'[ADFSSERVER2]',
-'[ADFSSERVER3]',
-'[ADFSSERVER4]'
+'[ADFSSERVER1A]',
+'[ADFSSERVER2A]',
+'[ADFSSERVER3A]',
+'[ADFSSERVER4A]'
 )
 $serversSecondary = @(
-'[ADFSSERVER12]',
-'[ADFSSERVER22]',
-'[ADFSSERVER32]',
-'[ADFSSERVER42]'
+'[ADFSSERVER1B]',
+'[ADFSSERVER2B]',
+'[ADFSSERVER3B]',
+'[ADFSSERVER4B]'
 )
 $serversCount = $serversPrimary.Count + $serversSecondary.Count
 
@@ -94,12 +95,12 @@ Function Monitor_ADFS
 
 Function Check_LB
 {
-	While (!((Read-Host "Servers offline in Load Balancer (Y/N)") -eq 'Y'))
+	$ie = New-Object –ComObject internetexplorer.application
+ 	Start-Process $adfsF5Primary
+  	Start-Process $adfsF5Secondary
+
+  	Do
 	{
-		$ie = New-Object –ComObject internetexplorer.application
-		Start-Sleep 1; Start-Process $adfsF5Primary
-		Start-Sleep 1; Start-Process $adfsF5Secondary
-		
 		Write-Host "Go to F5 Load Balancer at primary/secondary sites and force servers to be patched offline.
 		
 		`t1. Login with admin RSA credentials
@@ -112,7 +113,9 @@ Function Check_LB
 		
 		" -F Yellow
 		Pause
+		$rmContinue = Read-Host "Servers offline in Load Balancer (Y/N)")
 	}
+ 	Until ($rmContinue -eq "Y*")
 }
 
 
@@ -126,11 +129,30 @@ While ($true)
 	$reboot = Read-Host "`n`nReboot (P)rimary / (S)econdary Servers"
 	
 	If ($reboot –like "Q*") {Stop_Script}
-	ElseIf ($reboot –like "P*") {Check_LB; ForEach ($server in $serversPrimary) {Write-Host "`nRestarting $server..."; Restart-Computer $server –Force; Start-Sleep1}}
-	ElseIf ($reboot –like "S*") {Check_LB; ForEach ($server in $serversSeconary) {Write-Host "`nRestarting $server..."; Restart-Computer $server –Force; Start-Sleep 1}}
+	ElseIf ($reboot –like "P*")
+ 	{
+  		Check_LB
+    		ForEach ($server in $serversPrimary)
+      		{
+			Write-Host "`nRestarting $server..."
+	      		Restart-Computer $server –Force
+			Start-Sleep 120
+   		}
+  	}
+	ElseIf ($reboot –like "S*") 
+	 {
+  		Check_LB
+		ForEach ($server in $serversSeconary)
+   		{
+     			Write-Host "`nRestarting $server..."
+		 	Restart-Computer $server –Force
+		 	Start-Sleep 120
+    		}
+	 }
 	ElseIf ($reboot –like "C*")
 	{
-		Write-Host "`nMonitor for how many iterations? " -NoNewline; $count = Read-Host "Count"
+		Write-Host "`nMonitor for how many iterations? " -NoNewline
+  		$count = Read-Host "Count"
 		For ($i = 0; $i –le $count; $i++) {Monitor_ADFS}
 		Continue
 	}
