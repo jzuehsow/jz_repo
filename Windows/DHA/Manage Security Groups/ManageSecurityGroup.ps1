@@ -1,8 +1,3 @@
-
-
-
-
-
 $pshost = get-host
 $pswindow = $pshost.UI.RawUI
 $newsize = $pswindow.BufferSize
@@ -12,7 +7,7 @@ $pswindow.BufferSize = $newsize
 $pswindow.BackgroundColor = "DarkBlue"
 $pdc = (Get-ADDomain | Select-Object PDCEmulator).PDCEmulator;$PSDefaultParameterValues = @{"*-AD*:Server"="$pdc"}
 
-$scriptversion = "1.0"
+$scriptversion = "1.1"
 
 $banner = " ----------------------------------------------------------------------------------------------------------------------
  ----------------------------------------------------------------------------------------------------------------------                                                                                                                        
@@ -21,14 +16,6 @@ $banner = " --------------------------------------------------------------------
                                                                                                                                                                               
  ----------------------------------------------------------------------------------------------------------------------
  ----------------------------------------------------------------------------------------------------------------------
- 
- 
- 
- 
- 
- 
- 
- 
  "
 
 Remove-Variable rm* -Force;Clear-Host;$banner
@@ -39,10 +26,10 @@ Remove-Variable rm* -Force;Clear-Host;$banner
 
 Do 
 {
-$groupname = Read-Host "Enter the name of a security group to be viewed or modified"
-    If (!($(try {(Get-ADGroup $groupname)} catch {$null}))){Write-Host "Invalid group name." -F Red}
+    $groupName = Read-Host "Enter the name of a security group to be viewed or modified"
+    If (!($(try {(Get-ADGroup $groupName)} catch {$null}))){Write-Host "Invalid group name." -F Red}
 }
-Until ($(try {(Get-ADGroup $groupname)} catch {$null}))
+Until ($(try {(Get-ADGroup $groupName)} catch {$null}))
 
 #########################################################################################################################################################
 ## Verifies user is manager
@@ -50,7 +37,7 @@ Until ($(try {(Get-ADGroup $groupname)} catch {$null}))
 
 $pass = $false
 $rmcurrentuser = $env:username
-$rmmanager = (Get-ADGroup $groupname -Properties ManagedBy).ManagedBy
+$rmmanager = (Get-ADGroup $groupName -Properties ManagedBy).ManagedBy
 $rmManagerType = (Get-ADObject $rmmanager).ObjectClass
 if ($rmManagerType -eq 'user')
 {
@@ -94,7 +81,7 @@ If ($rmselection -eq "1")
     }
     Until ($(try {(get-aduser $rmuser)} catch {$null}))
 
-Add-ADGroupMember -Identity $groupname -Members $rmuser
+Add-ADGroupMember -Identity $groupName -Members $rmuser
 "";Write-Host "$rmuser added to group." -F Green;"";Pause
 }
 
@@ -105,7 +92,7 @@ Add-ADGroupMember -Identity $groupname -Members $rmuser
 If ($rmselection -eq "2")
 {
 "";Write-Host "Below are the group members:" -F Green;""
-$rmusers = (Get-ADGroupMember -Identity $groupname).SamAccountName
+$rmusers = (Get-ADGroupMember -Identity $groupName).SamAccountName
 
     $i = 1
     Foreach ($rmuser in $rmusers){New-Variable -Name rmuser$i -Value $rmuser;Write-host "$i. $rmuser" -F Magenta;$i++};""     
@@ -120,7 +107,7 @@ $rmusers = (Get-ADGroupMember -Identity $groupname).SamAccountName
     If ($rmlinenumber -notlike "c")
     {
     $rmuser = Get-Variable -Name rmuser$rmlinenumber -ValueOnly    
-    Remove-ADGroupMember -Identity $groupname -Members $rmuser -Confirm:$false
+    Remove-ADGroupMember -Identity $groupName -Members $rmuser -Confirm:$false
     "";Write-Host "$rmuser removed from group" -F Green;"";Pause
     }
 }
@@ -132,7 +119,7 @@ $rmusers = (Get-ADGroupMember -Identity $groupname).SamAccountName
 If ($rmselection -eq "3")
 {
 "";Write-Host "Below are the group members:" -F Green;""
-$rmusers = (Get-ADGroupMember -Identity $groupname).SamAccountName
+$rmusers = (Get-ADGroupMember -Identity $groupName).SamAccountName
     $i = 1
     Foreach ($rmuser in $rmusers){Write-host "$i. $rmuser" -F Magenta;$i++;};"";Pause     
 }
