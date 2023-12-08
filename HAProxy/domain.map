@@ -1,0 +1,4 @@
+#Domain_Name               Backend_Name
+google.com                 google_web
+maxar.com                  maxar_web
+other.com                  default_backend

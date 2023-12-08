@@ -17,7 +17,7 @@ Start_Script
 Write_Banner
 
 $csv = '.\NewComputers.csv'
-computersOU = 'OU=COMPUTERS,OU=HELPDESK,OU=SITE,OU=REGION,DC=MICROSOFT,DC=CONTOSO,DC=COM'
+$computersOU = 'OU=COMPUTERS,OU=HELPDESK,OU=SITE,OU=REGION,DC=MICROSOFT,DC=CONTOSO,DC=COM'
 $vlan = '8021x_VLAN'  #OPTIONAL
 
 While (!(Test-Path $csv))

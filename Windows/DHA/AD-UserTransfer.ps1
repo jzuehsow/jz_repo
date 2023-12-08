@@ -1,13 +1,3 @@
-
-
-
-
-
-
-
-
-
-
 #IMPORT COMMON FUNCTIONS
 
 Start_Script
@@ -23,7 +13,7 @@ Clear-Host;$banner
 
 Do
 {
-$rmticket = Read-Host "Enter the ticket number"
+    $rmticket = Read-Host "Enter the ticket number"
     If ($rmticket -notlike "????*"){Write-Host "Invalid ticket number." -F Red}
 }
 Until ($rmticket -like "????*")
@@ -189,7 +179,7 @@ If ($rmnewdis){Set-ADUser $rmuser -DisplayName $rmnewdis}
 ###################################################################################################################################################################
 ""
 Do{
-$another = Read-Host "Would you like to transfer another user? (Y/N)"
+    $another = Read-Host "Would you like to transfer another user? (Y/N)"
     If ($another -ne "Y" -and $another -ne "N"){Write-Host "Invalid selection." -F Red}
 }
 Until ($another -eq "Y" -or $another -eq "N")

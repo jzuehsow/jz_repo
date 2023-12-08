@@ -1,24 +1,39 @@
+<#############################################################################################################################################################
 
+Author:      Jeremy Zuehsow
 
+Purpose:     This script monitors and reboots the ADFS servers for monthly patching.
 
+Change Log: 
+
+#############################################################################################################################################################>
+
+Set-Location $PSScriptRoot
+.".\Config\Common.ps1"
+$version = '1.0'
+
+Start_Script
 
 Import-Module ActiveDirectory
 $ErrorActionPreference = 'SilentlyContinue'
-$compList = '.\NewComputers.csv'
+$csv = '.\NewComputers.csv'
+$compList = Import-Csv -Path $csv
 $ou = 'OU=MAB,OU=HELPDESK,OU=SITE,OU=REGION,DC=MICROSOFT,DC=CONTOSO,DC=COM'
-$defaultPassword = ConvertTo-SecureString 'Password' -AsPlainText -Force
-$mabVLAN = 'MAB_VLAN101'
+$plainPassword = 'Password'
+$defaultPassword = ConvertTo-SecureString $plainPassword -AsPlainText -Force
+$mabVLAN = 'MAB_VLAN'
 $domain = 'microsoft.contoso.com'
 
-ForEach ($item in $compList)
+ForEach ($rmComp in $compList)
 {
-    $mac = $item.MAC
-    $macUPN = $item.UPN
-    $mabDescription = $item.MABDescription
+    $rmMac = $rmComp.MAC
+    $rmMacUPN = $rmComp.UPN
+    $rmMABDescription = $rmComp.MABDescription
 
-    New-ADUser -Name $mac -GivenName $mac -DisplayName $mac -UserPrincipleName $macUPN -AccountPassword $defaultPassword -AllowReversiblePasswordEncryption $true `
-    -CannotChangePassword $true -ChangePasswordAtLogon $false -Description $mabDescription -Enabled $false -Path $ou -PasswordNeverExpires $true
-    $sam = (Get-ADUser -Identity $mac).SamAccountName
-    Add-ADGroupMember $mabVLAN -Members $sam
-    Set-ADAccountPassword -Identity $sam -NewPassword (ConvertTo-SecureString $sam -AsPlainText -Force)
+    New-ADUser -Name $rmMac -GivenName $rmMac -DisplayName $rmMac -UserPrincipleName $rmMacUPN -AccountPassword $defaultPassword -AllowReversiblePasswordEncryption $true -CannotChangePassword $true -ChangePasswordAtLogon $false -Description $rmMABDescription -Enabled $false -Path $ou -PasswordNeverExpires $true
+    $rmSam = (Get-ADUser -Identity $rmMac).SamAccountName
+    Add-ADGroupMember $mabVLAN -Members $rmSam
+    Set-ADAccountPassword -Identity $rmSam -NewPassword (ConvertTo-SecureString $rmSam -AsPlainText -Force)
+
+    Remove-Variable rm* -Force
 }
