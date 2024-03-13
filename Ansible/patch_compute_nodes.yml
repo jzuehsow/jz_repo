@@ -1,0 +1,6 @@
+- name: Disable compute node
+  ansible.builtin.shell:
+    cmd: openstack compute service set --disable {{ node_name }} nova-compute
+  delegate_to: localhost
+
+- name: Evacuate

@@ -28,7 +28,7 @@ Function MainMenuAction ($result)
         #SPLIT SPECIFIC AND BULK ACTIONS
 
         2 {& ".\Exchange\launcher-EXCH.ps1" -configData $configData -ConnectToExchange $true}
-        3 {#Options / Settings}
+        3 {<#Options / Settings#>}
         4 {Exit}
         Default {}
     }
