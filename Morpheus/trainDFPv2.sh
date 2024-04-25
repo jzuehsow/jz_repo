@@ -31,6 +31,7 @@ copy_file () {
   if ! podman ps --filter "name=${containerName}" --filter "status=running" | grep -q ${containerName}; then
     newFile=$(insert_timestamp "$file")
     podman cp ${containerName}:/workspace/$file ./$newFile
+    echo "\n\nCopied $newFile to local."
     break
   fi
   sleep 1
@@ -70,16 +71,4 @@ podman run -d --name $inference -v /morpheus/ingest:/ingest:Z $containerOpts $mo
   --pretrained_filename=/ingest/${outputModel} \
   --output_file ./${outputFile}
 copy_file $inference $outputFile
-
-
-
-
-
-podman cp ${trainer}:${modelsDir}/dfp-models/${outputModel} ./cloudtrail_ae_user_models-${timestamp}.pkl
-podman cp ${trainer}:/workspace/${outputFile} ./cloudtrail-dfp-results-${timestamp}.csv
-
-
-podman cp ${inference}:/workspace/${outputFile} ./cloudtrail-dfp-results-final-${timestamp}.csv
-
-
 
