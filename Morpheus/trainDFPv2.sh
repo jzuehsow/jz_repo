@@ -42,7 +42,7 @@ insert_timestamp () {
   local timestamp="$(date '+%Y%m%d-%H:%M:%S')"
   local extension="${filename##*.}"
   local fileNameOnly="${filename%.*}"
-  local newFilename=${fileNameOnly}-${timestamp}.${extension}"
+  local newFilename="${fileNameOnly}-${timestamp}.${extension}"
 }
 
 container_check $triton
