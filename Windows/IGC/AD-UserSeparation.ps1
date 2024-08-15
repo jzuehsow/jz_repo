@@ -15,7 +15,7 @@ Write_Banner
 
 Import-Module ActiveDirectory
 $user = Read-Host "Enter username" | Get-ADUser
-$archiveOU = "[ARCHIVED USER OU]"
+$archiveOU = <ARCHIVED USER OU>
 $newPassword = ConvertTo-SecureString -AsPlainText "Password1234" -Force
 $date = Get-Date -UFormat "%m/%d/%Y"
 $groups = Get-ADPrincipalGroupMembership $user

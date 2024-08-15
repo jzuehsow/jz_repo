@@ -14,11 +14,10 @@ Start_Script
 Write_Banner
 
 Import-Module ActiveDirectory
-$ErrorActionPreference = 'SilentlyContinue'
 $searchBase = 'OU=Computers,OU=Tysons Corner,DC=IGEN,DC=LOCAL'
-$computers = Get-ADComputer -Filter * -SearchBase $searchBase
+$logfile = ".\CiscoAnyConnectVersionLog.txt"
 
-ForEach ($cpuName in $computers.Name)
+ForEach ($cpuName in (Get-ADComputer -Filter * -SearchBase $searchBase).Name)
 {
     If (Test-Connection $cpuName -Count 1 -Quiet)
     {
@@ -31,11 +30,11 @@ ForEach ($cpuName in $computers.Name)
         $reg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine', $cpuName)
         $regKey = $reg.OpenSubKey("SOFTWARE\\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Cisco AnyConnect Secure Mobility Client")
         $version = $regKey.GetValue("DisplayVersion")
-        Write-Host $cpuName $version <# | OutFile -Encoding Unicode -FilePath ".\CiscoAnyConnectVersionLog.txt" -Append#>
+        Write-Host $cpuName $version <# | OutFile -Encoding Unicode -FilePath $logfile -Append#>
     }
     else
     {
         Write-Host "$cpuName Offline"
-        #"$cpuName Offline" | Out-File -Encoding Unicode -FilePath ".\CiscoAnyConnectVersionLog.txt" -Append
+        #"$cpuName Offline" | Out-File -Encoding Unicode -FilePath $logfile -Append
     }
 }

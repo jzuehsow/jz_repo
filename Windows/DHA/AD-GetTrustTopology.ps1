@@ -7,11 +7,11 @@ $date = Get-Date -Format yyyy-MM-dd-HHmm
 
 
 Trap [Exception]
-		{
+	{
 		 $Script:ExceptionMessage = $_
 		 $Error.Clear()
 		 continue
-		}
+	}
 
 $FormatEnumerationLimit = -1
 $TrustsOutput = "[LOG PATH]]\Trust Topology\Trust Topology-$date.txt"

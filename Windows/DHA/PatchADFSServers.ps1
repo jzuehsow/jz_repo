@@ -8,7 +8,7 @@ Created:     07/01/2019
 
 Change Log: v1.1 Added functions for monitoring servers and checking load balancers.
             v1.2 Modified monitoring function to manually check a certain number of times
-	    v1.3 Check_LB function modified for efficiency; changed some formatting
+	    	v1.3 Check_LB function modified for efficiency; changed some formatting
 
 #############################################################################################################################################################>
 

@@ -1,7 +1,6 @@
 
 Function Start_Script
 {
-  Import-Module ActiveDirectory
   $psHost = Get-Host
   $psWindow = $psHost.UI.RawUI
   $newSize = $psWindow.BufferSize

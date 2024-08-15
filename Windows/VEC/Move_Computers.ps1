@@ -37,7 +37,7 @@ ForEach ($comp in $compList)
     }
     else {$rmStatus = "$newName Offline - $date"}
     Write-Host $rmStatus
-    $rm$status | Out-File -Encoding unicode -FilePath ".\MoveLog - $date.txt" -Append
+    $rmStatus | Out-File -Encoding unicode -FilePath ".\MoveLog - $date.txt" -Append
 
     $rmSam = (Get-ADComputer -Identity $rmNewName).SamAccountName
 

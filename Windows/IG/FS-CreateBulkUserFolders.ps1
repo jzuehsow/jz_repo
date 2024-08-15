@@ -20,7 +20,7 @@ $ous =@(
     '[OU=OU3,DC=CONTOSO,DC=COM]'
     '[OU=OU4,DC=CONTOSO,DC=COM]'
 )
-$folderPath = [Folder_Path]
+$folderPath = <Folder_Path>
 
 ForEach ($ou in $ous)
 {
@@ -35,7 +35,12 @@ ForEach ($ou in $ous)
         icacls $newFolder /grant:r "System:(OI)(CI)F"
         icacls $newFolder /grant:r "Administrators:(OI)(CI)F"
         icacls $newFolder /grant:r ($sam + ':(OI)(CI)M')
+        Write-Host "Created folder for $rmSam"
+        Remove-Variable $rmSam -Force
     }
+
+    Write-Host "/n/nFinished $ou /n/n"
+    Clear-Variable rm* -Force
 }
 
 Stop_Script

@@ -14,16 +14,15 @@ Start_Script
 Write_Banner
 
 Import-Module ActiveDirectory
-#Get-Variable -Exclude PWD,*Preference | Remove-Variable -ErrorAction 0 #Superseded by Start_Script? Testing Required
 $ErrorActionPreference = 'SilentlyContinue'
-$userList = Import-Csv '.\Input\users.csv'
+$userList = Import-Csv <USER LIST CSV>
 
 ForEach ($user in $userList)
 {
     $rmName = $user.name
     $rmTitle = $user.title
     $rmDepartment = $user.Department
-    $rmCompany = [COMPANY_NAME]
+    $rmCompany = <COMPANY NAME>
     $rmManager = (Get-ADUser $user.Manager).DistinguishedName
     $rmOffice = $user.office
     $rmOfficePhone = $user.officePhone

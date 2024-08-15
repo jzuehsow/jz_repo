@@ -24,16 +24,16 @@ $csvPath = "[PATH]\Input\SCINET_Names"
 Write-Host "What is the target date and time of the name change?" -F Yellow
 Do
 {
-    Remove-Variable rm* -Force
 	Do {$rmDate = Read-Host "`nTarget Month/Day"}
 	Until (Get-Date $rmDate)
 	Do {$rmTime = Read-Host "`nTarget Time"}
 	Until (Get-Date $rmTime)
 	$targetDate = Get-Date (Get-Date ($rmDate)).AddHours((Get-Date $rmTime –FormatHH)) -Format F
 	Write-Host "`nTarget date and time for name change: " -NoNewLine; Write-Host $targetDate –F Yellow
-	$rmContinue = Read-Host "`nIs this correct (Y/N)";"`n"
+	$continue = Read-Host "`nIs this correct (Y/N)";"`n"
+    Remove-Variable rm* -Force
 }
-Until ($rmContinue –eq 'Y')
+Until ($continue –eq 'Y')
 
 Do
 {
@@ -62,8 +62,8 @@ ForEach ($line in $list)
 {
 	Remove-Variable rm* -Force
 	$rmName = (Get-Culture).TextInfo.ToTitleCase(($line.UpliftGivenName+" "+$line.UpliftSurname).ToLower())
-	$rmFBISam = ($line.SamAccountName).ToUpper()
-	$rmSCISam = ($line.UpliftSamAccountName).ToUpper()
+	$rmREDam = ($line.SamAccountName).ToUpper()
+	$rmYELLOWSam = ($line.UpliftSamAccountName).ToUpper()
 	$rmEID = $line.EID
 	$rmEmail = (Get-ADUser –Filter {EmployeeID –like $rmEID} -Properties EmailAddress).EmailAddress
 	

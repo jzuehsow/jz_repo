@@ -14,4 +14,4 @@ podman run -d --name morpheus-logs --device nvidia.com/gpu=0 --gpus=1 --security
 	--model_seq_length=256 \
 	--model_name log-parsing-onnx \
 	--model_config_file=${MORPHEUS_ROOT}/models/log-parsing-models/log-parsing-config-20220418.json \
-	--server_url 192.171.4.249:8001
+	--server_url <HOST SERVER IP>:8001
