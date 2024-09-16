@@ -21,7 +21,13 @@ Function update_powershell
     Write-Host "Powershell version upgraded from $oldPSVersion to $newPSVersion"
 }
 
-Function set_desktop_heme
+Function update_os
+{
+    #WINDOWS UPDATE SETTINGS
+    #UPDATE WINDOWS
+}
+
+Function set_desktop_home
 {
     start-process -filepath "C:\Windows\Resources\Themes\dark.theme"
     timeout /t 3; taskkill /im "systemsettings.exe" /f
@@ -29,7 +35,16 @@ Function set_desktop_heme
     #CHANGE BACKGROUND FROM IMAGE IN ONEDRIVE????
 }
 
+Function set_24_clock
+{
+    #WINDOWS SETTING SET DATE AND TIME TO 24 HOUR CLOCK
+}
 
+Function install_default_software
+{
+    #SOFTWARE FROM ONEDRIVE - TREE, VBOX, DUPE FILES, O365
+    #FOREACH SW ASK
+}
 
 
 #Reboot Computer
